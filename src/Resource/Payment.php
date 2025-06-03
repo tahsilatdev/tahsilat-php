@@ -5,11 +5,11 @@ namespace Tahsilat\Resource;
 /**
  * Payment resource
  *
- * @property string $id Payment ID
+ * @property int $id Payment ID
  * @property string $status Payment status
- * @property float $amount Payment amount
+ * @property int $amount Payment amount
  * @property string $currency Payment currency
- * @property string $customer_id Customer ID
+ * @property int $customer_id Customer ID
  * @property string $redirect_url Redirect URL for 3DS
  * @property array $metadata Payment metadata
  * @property string $created_at Creation timestamp

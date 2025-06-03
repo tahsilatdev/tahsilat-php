@@ -5,7 +5,7 @@ namespace Tahsilat\Resource;
 /**
  * Customer resource
  *
- * @property string $id Customer ID
+ * @property int $id Customer ID
  * @property string $name Customer first name
  * @property string $lastname Customer last name
  * @property string $email Customer email
