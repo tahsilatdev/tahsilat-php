@@ -10,6 +10,11 @@ namespace Tahsilat;
 class Tahsilat
 {
     /**
+     * @var string SDK Version
+     */
+    const VERSION = '1.0.1';
+
+    /**
      * @var string The Tahsilat API base URL
      */
     const API_BASE = 'https://api.tahsilat.dev/v1/';

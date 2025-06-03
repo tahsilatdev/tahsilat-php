@@ -79,7 +79,7 @@ class CurlClient implements HttpClientInterface
         // Set user agent
         $phpVersion = PHP_VERSION;
         $curlVersion = curl_version();
-        $this->defaultOptions[CURLOPT_USERAGENT] = 'Tahsilat-PHP/' . TAHSILAT_VERSION .
+        $this->defaultOptions[CURLOPT_USERAGENT] = 'Tahsilat-PHP/' . Tahsilat::VERSION .
             ' (PHP ' . $phpVersion . '; cURL ' . $curlVersion['version'] . ')';
     }
 

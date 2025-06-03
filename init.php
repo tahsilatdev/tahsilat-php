@@ -19,9 +19,6 @@ foreach ($requiredExtensions as $ext) {
     }
 }
 
-// Define SDK constants
-define('TAHSILAT_VERSION', '1.1.1');
-
 // Base classes
 require_once __DIR__ . '/src/Tahsilat.php';
 require_once __DIR__ . '/src/TahsilatClient.php';
