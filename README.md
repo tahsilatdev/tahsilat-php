@@ -1,6 +1,6 @@
 # Tahsilat PHP SDK
 
-A PHP SDK for Tahsilat Payment Gateway with a Stripe-like interface.
+A PHP SDK for Tahsilat Payment Gateway.
 
 ## Requirements
 
