@@ -6,6 +6,7 @@ use Tahsilat\Exception\ApiErrorException;
 use Tahsilat\Exception\AuthenticationException;
 use Tahsilat\Exception\InvalidRequestException;
 use Tahsilat\Resource\Refund;
+use Tahsilat\Resource\ResolvePreAuth;
 use Tahsilat\Resource\TransactionResult;
 
 /**
@@ -43,7 +44,7 @@ class TransactionService extends AbstractService
     /**
      * Create a new refund
      *
-     * @param array<string, mixed> $params Customer parameters
+     * @param array<string, mixed> $params parameters
      * @param array<string, mixed> $opts Request options
      * @return Refund Refund resource
      * @throws AuthenticationException
@@ -53,5 +54,18 @@ class TransactionService extends AbstractService
         $response = $this->request('post', '/transaction/refund', $params, $opts);
 
         return new Refund($response);
+    }
+
+    /**
+     * @param array<string, mixed> $params parameters
+     * @param array<string, mixed> $opts Request options
+     * @return ResolvePreAuth
+     * @throws AuthenticationException
+     */
+    public function resolvePreAuth($params = [], $opts = [])
+    {
+        $response = $this->request('post', '/transaction/resolve-pre-auth', $params, $opts);
+
+        return new ResolvePreAuth($response);
     }
 }
