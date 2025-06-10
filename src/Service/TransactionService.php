@@ -2,6 +2,7 @@
 
 namespace Tahsilat\Service;
 
+use Tahsilat\Exception\ApiErrorException;
 use Tahsilat\Exception\AuthenticationException;
 use Tahsilat\Resource\Refund;
 use Tahsilat\Resource\TransactionResult;
@@ -21,9 +22,16 @@ class TransactionService extends AbstractService
      */
     public function retrieve($transactionId, $opts = [])
     {
-        $response = $this->request('get', '/transaction/' . $transactionId, [], $opts);
+        try {
+            $response = $this->request('get', '/transaction/' . $transactionId, [], $opts);
+            return new TransactionResult($response);
+        } catch (ApiErrorException $e) {
+            if ($e->getCode() === 404) {
+                return null;
+            }
 
-        return new TransactionResult($response);
+            throw $e;
+        }
     }
 
     /**

@@ -2,6 +2,7 @@
 
 namespace Tahsilat\Service;
 
+use Tahsilat\Exception\AuthenticationException;
 use Tahsilat\Resource\Product;
 
 /**
@@ -17,6 +18,7 @@ class ProductService extends AbstractService
      * @param array<string, mixed> $params Product parameters
      * @param array<string, mixed> $opts Request options
      * @return Product Product resource
+     * @throws AuthenticationException
      */
     public function create($params = [], $opts = [])
     {

@@ -2,6 +2,7 @@
 
 namespace Tahsilat\Service;
 
+use Tahsilat\Exception\AuthenticationException;
 use Tahsilat\Resource\Payment;
 
 /**
@@ -17,6 +18,7 @@ class PaymentService extends AbstractService
      * @param array<string, mixed> $params Payment parameters
      * @param array<string, mixed> $opts Request options
      * @return Payment Payment resource
+     * @throws AuthenticationException
      */
     public function create3ds($params = [], $opts = [])
     {
@@ -42,6 +44,7 @@ class PaymentService extends AbstractService
      * @param array<string, mixed> $params Payment parameters
      * @param array<string, mixed> $opts Request options
      * @return Payment Payment resource
+     * @throws AuthenticationException
      */
     public function create($params = [], $opts = [])
     {

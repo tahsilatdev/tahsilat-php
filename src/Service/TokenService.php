@@ -2,6 +2,7 @@
 
 namespace Tahsilat\Service;
 
+use Tahsilat\Exception\AuthenticationException;
 use Tahsilat\Resource\Token;
 
 /**
@@ -16,6 +17,7 @@ class TokenService extends AbstractService
      *
      * @param array<string, mixed> $opts Request options
      * @return Token Token resource
+     * @throws AuthenticationException
      */
     public function getToken($opts = [])
     {
@@ -35,6 +37,7 @@ class TokenService extends AbstractService
      *
      * @param array<string, mixed> $opts Request options
      * @return Token Token resource
+     * @throws AuthenticationException
      */
     public function create($opts = [])
     {
