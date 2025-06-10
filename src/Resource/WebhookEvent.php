@@ -36,6 +36,10 @@ class WebhookEvent extends ApiResource
      */
     public function isSuccess()
     {
+        if (!isset($this->payment_status) || !isset($this->transaction_status)) {
+            return false;
+        }
+
         return $this->payment_status === StatusConstants::PAYMENT_STATUS_SUCCESS &&
             in_array($this->transaction_status, [
                 StatusConstants::TRANSACTION_STATUS_COMPLETED,
@@ -50,6 +54,10 @@ class WebhookEvent extends ApiResource
      */
     public function isFail()
     {
+        if (!isset($this->payment_status)) {
+            return false;
+        }
+
         return $this->payment_status === StatusConstants::PAYMENT_STATUS_FAILED;
     }
 
