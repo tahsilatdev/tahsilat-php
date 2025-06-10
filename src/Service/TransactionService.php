@@ -4,6 +4,7 @@ namespace Tahsilat\Service;
 
 use Tahsilat\Exception\AuthenticationException;
 use Tahsilat\Resource\Refund;
+use Tahsilat\Resource\TransactionResult;
 
 /**
  * Service for customer operations
@@ -12,6 +13,19 @@ use Tahsilat\Resource\Refund;
  */
 class TransactionService extends AbstractService
 {
+    /**
+     * @param $transactionId
+     * @param $opts
+     * @return TransactionResult
+     * @throws AuthenticationException
+     */
+    public function retrieve($transactionId, $opts = [])
+    {
+        $response = $this->request('get', '/transaction/' . $transactionId, [], $opts);
+
+        return new TransactionResult($response);
+    }
+
     /**
      * Create a new refund
      *
