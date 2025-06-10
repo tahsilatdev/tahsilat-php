@@ -31,6 +31,7 @@ class TransactionService extends AbstractService
             }
 
             $response = $this->request('get', '/transaction/' . $transactionId, [], $opts);
+
             return new TransactionResult($response);
         } catch (ApiErrorException $e) {
             if ($e->getErrorCode() === 2004 || $e->getCode() === 404) {

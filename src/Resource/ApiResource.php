@@ -10,63 +10,15 @@ namespace Tahsilat\Resource;
 abstract class ApiResource
 {
     /**
-     * @var array<string, mixed> Resource data
-     */
-    protected $data;
-
-    /**
      * Constructor
      *
      * @param array<string, mixed> $data Resource data
      */
     public function __construct($data = [])
     {
-        $this->data = $data;
-    }
-
-    /**
-     * Get property value
-     *
-     * @param string $name Property name
-     * @return mixed Property value
-     */
-    public function __get($name)
-    {
-        return isset($this->data[$name]) ? $this->data[$name] : null;
-    }
-
-    /**
-     * Set property value
-     *
-     * @param string $name Property name
-     * @param mixed $value Property value
-     * @return void
-     */
-    public function __set($name, $value)
-    {
-        $this->data[$name] = $value;
-    }
-
-    /**
-     * Check if property exists
-     *
-     * @param string $name Property name
-     * @return bool Whether property exists
-     */
-    public function __isset($name)
-    {
-        return isset($this->data[$name]);
-    }
-
-    /**
-     * Unset property
-     *
-     * @param string $name Property name
-     * @return void
-     */
-    public function __unset($name)
-    {
-        unset($this->data[$name]);
+        foreach ($data as $key => $value) {
+            $this->{$key} = $value;
+        }
     }
 
     /**
@@ -76,7 +28,9 @@ abstract class ApiResource
      */
     public function toArray()
     {
-        return $this->data;
+        $vars = get_object_vars($this);
+        // Remove any internal properties if needed
+        return $vars;
     }
 
     /**
@@ -87,7 +41,7 @@ abstract class ApiResource
      */
     public function toJson($options = 0)
     {
-        return json_encode($this->data, $options);
+        return json_encode($this->toArray(), $options);
     }
 
     /**
@@ -101,7 +55,7 @@ abstract class ApiResource
     }
 
     /**
-     * Get a value from the resource data
+     * Get a value from the resource
      *
      * @param string $key The key to get
      * @param mixed $default Default value if key doesn't exist
@@ -109,11 +63,11 @@ abstract class ApiResource
      */
     public function get($key, $default = null)
     {
-        return isset($this->data[$key]) ? $this->data[$key] : $default;
+        return property_exists($this, $key) ? $this->{$key} : $default;
     }
 
     /**
-     * Set a value in the resource data
+     * Set a value in the resource
      *
      * @param string $key The key to set
      * @param mixed $value The value to set
@@ -121,42 +75,19 @@ abstract class ApiResource
      */
     public function set($key, $value)
     {
-        $this->data[$key] = $value;
+        $this->{$key} = $value;
         return $this;
     }
 
     /**
-     * Check if a key exists in the resource data
+     * Check if a key exists in the resource
      *
      * @param string $key The key to check
      * @return bool Whether the key exists
      */
     public function has($key)
     {
-        return isset($this->data[$key]);
-    }
-
-    /**
-     * Remove a key from the resource data
-     *
-     * @param string $key The key to remove
-     * @return $this
-     */
-    public function remove($key)
-    {
-        unset($this->data[$key]);
-        return $this;
-    }
-
-    /**
-     * Clear all data
-     *
-     * @return $this
-     */
-    public function clear()
-    {
-        $this->data = [];
-        return $this;
+        return property_exists($this, $key);
     }
 
     /**
