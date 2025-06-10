@@ -5,27 +5,29 @@ namespace Tahsilat\Resource;
 use Tahsilat\Util\StatusConstants;
 
 /**
- * Transaction result resource
+ * Webhook event resource
  *
  * @property int $transaction_id Transaction ID
  * @property float $amount Transaction amount
- * @property string $currency_code Currency code (TRY, USD, EUR)
  * @property int $installment_count Installment count
- * @property int $payment_status Payment status code
- * @property string $payment_status_text Payment status text (success, failed)
- * @property int $transaction_status Transaction status code
- * @property string $transaction_status_text Transaction status text (completed, pending)
- * @property string|null $transaction_message Transaction message if any
- * @property string|null $transaction_code Transaction code if any
- * @property int $payment_method Payment method code
- * @property string $payment_method_text Payment method text (is_3d, is_2d)
- * @property bool $pre_auth Whether pre-authorization
+ * @property int $payment_status Payment status
+ * @property string $payment_status_text Payment status text
+ * @property int $transaction_status Transaction status
+ * @property string $transaction_status_text Transaction status text
+ * @property string|null $transaction_message Transaction message
+ * @property string|null $transaction_code Transaction code
+ * @property string $currency_code Currency code
+ * @property int $payment_method Payment method
+ * @property string $payment_method_text Payment method text
+ * @property bool $pre_auth Pre-authorization flag
  * @property string $created_at Creation timestamp
- * @property string $start_at Transaction start time
- * @property string $end_at Transaction end time
+ * @property string|null $start_at Start timestamp
+ * @property string|null $end_at End timestamp
  * @property array $metadata Transaction metadata
+ *
+ * @package Tahsilat\Resource
  */
-class TransactionResult extends ApiResource
+class WebhookEvent extends ApiResource
 {
     /**
      * Check if payment was successful

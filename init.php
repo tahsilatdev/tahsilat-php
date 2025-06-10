@@ -33,6 +33,7 @@ require_once __DIR__ . '/src/Exception/ApiErrorException.php';
 require_once __DIR__ . '/src/Exception/AuthenticationException.php';
 require_once __DIR__ . '/src/Exception/InvalidRequestException.php';
 require_once __DIR__ . '/src/Exception/NetworkException.php';
+require_once __DIR__ . '/src/Exception/SignatureVerificationException.php';
 
 // Resources
 require_once __DIR__ . '/src/Resource/ApiResource.php';
@@ -41,6 +42,7 @@ require_once __DIR__ . '/src/Resource/Payment.php';
 require_once __DIR__ . '/src/Resource/Customer.php';
 require_once __DIR__ . '/src/Resource/Product.php';
 require_once __DIR__ . '/src/Resource/Refund.php';
+require_once __DIR__ . '/src/Resource/WebhookEvent.php';
 
 // Services
 require_once __DIR__ . '/src/Service/AbstractService.php';
@@ -52,3 +54,4 @@ require_once __DIR__ . '/src/Service/TransactionService.php';
 
 // Utilities
 require_once __DIR__ . '/src/Util/RequestOptions.php';
+require_once __DIR__ . '/src/Util/Webhook.php';

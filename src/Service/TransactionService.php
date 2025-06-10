@@ -20,7 +20,7 @@ class TransactionService extends AbstractService
      * @param $opts
      * @return TransactionResult
      * @throws AuthenticationException
-     * @throws ApiErrorException
+     * @throws ApiErrorException|InvalidRequestException
      */
     public function retrieve($transactionId, $opts = [])
     {
