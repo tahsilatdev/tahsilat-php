@@ -4,6 +4,7 @@ namespace Tahsilat\Service;
 
 use Tahsilat\Exception\ApiErrorException;
 use Tahsilat\Exception\AuthenticationException;
+use Tahsilat\Exception\InvalidRequestException;
 use Tahsilat\Resource\Refund;
 use Tahsilat\Resource\TransactionResult;
 
@@ -19,14 +20,19 @@ class TransactionService extends AbstractService
      * @param $opts
      * @return TransactionResult
      * @throws AuthenticationException
+     * @throws ApiErrorException
      */
     public function retrieve($transactionId, $opts = [])
     {
         try {
+            if (empty($transactionId)) {
+                throw new InvalidRequestException('Transaction ID is required');
+            }
+
             $response = $this->request('get', '/transaction/' . $transactionId, [], $opts);
             return new TransactionResult($response);
         } catch (ApiErrorException $e) {
-            if ($e->getCode() === 404) {
+            if ($e->getErrorCode() === 2004 || $e->getCode() === 404) {
                 return null;
             }
 
