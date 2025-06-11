@@ -20,7 +20,7 @@ class BinLookupService extends AbstractService
      * @return BinLookup BinLookup resource
      * @throws AuthenticationException
      */
-    public function search($params = [], $opts = [])
+    public function detail($params = [], $opts = [])
     {
         $response = $this->request('post', '/bin-lookup', $params, $opts);
 

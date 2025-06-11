@@ -20,7 +20,7 @@ use Tahsilat\Service\BinLookupService;
  * @property ProductService $products
  * @property TokenService $tokens
  * @property CommissionService $commissions
- * @property BinLookupService $bin_lookup
+ * @property BinLookupService $binLookup
  *
  * @package Tahsilat
  */
