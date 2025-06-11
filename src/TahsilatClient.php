@@ -2,6 +2,8 @@
 
 namespace Tahsilat;
 
+use Tahsilat\Exception\ApiErrorException;
+use Tahsilat\Service\CommissionService;
 use Tahsilat\Service\CustomerService;
 use Tahsilat\Service\PaymentService;
 use Tahsilat\Service\ProductService;
@@ -16,6 +18,7 @@ use Tahsilat\Service\TransactionService;
  * @property PaymentService $payments
  * @property ProductService $products
  * @property TokenService $tokens
+ * @property CommissionService $commissions
  *
  * @package Tahsilat
  */
@@ -112,7 +115,7 @@ class TahsilatClient
      * Fetch access token using the API key
      *
      * @return void
-     * @throws ApiErrorException When token fetch fails
+     * @throws ApiErrorException|Exception\AuthenticationException When token fetch fails
      */
     private function fetchAccessToken()
     {

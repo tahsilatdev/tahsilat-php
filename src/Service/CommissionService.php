@@ -20,7 +20,7 @@ class CommissionService extends AbstractService
      * @return Commission Commission resource
      * @throws AuthenticationException
      */
-    public function create($params = [], $opts = [])
+    public function get($params = [], $opts = [])
     {
         $response = $this->request('post', '/pos/commissions', $params, $opts);
 
