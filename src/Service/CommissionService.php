@@ -13,14 +13,14 @@ use Tahsilat\Resource\Commission;
 class CommissionService extends AbstractService
 {
     /**
-     * Create a new product
+     * Get commission details
      *
      * @param array<string, mixed> $params Commission parameters
      * @param array<string, mixed> $opts Request options
      * @return Commission Commission resource
      * @throws AuthenticationException
      */
-    public function get($params = [], $opts = [])
+    public function search($params = [], $opts = [])
     {
         $response = $this->request('post', '/pos/commissions', $params, $opts);
 
