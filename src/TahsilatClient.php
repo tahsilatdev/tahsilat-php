@@ -169,7 +169,7 @@ class TahsilatClient
             'products' => 'Tahsilat\\Service\\ProductService',
             'tokens' => 'Tahsilat\\Service\\TokenService',
             'commissions' => 'Tahsilat\\Service\\CommissionService',
-            'bin_lookup' => 'Tahsilat\\Service\\BinLookupService',
+            'binLookup' => 'Tahsilat\\Service\\BinLookupService',
         ];
 
         return isset($services[$name]) ? $services[$name] : null;
