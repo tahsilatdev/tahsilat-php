@@ -166,6 +166,7 @@ class TahsilatClient
             'payments' => 'Tahsilat\\Service\\PaymentService',
             'products' => 'Tahsilat\\Service\\ProductService',
             'tokens' => 'Tahsilat\\Service\\TokenService',
+            'commissions' => 'Tahsilat\\Service\\CommissionService',
         ];
 
         return isset($services[$name]) ? $services[$name] : null;
