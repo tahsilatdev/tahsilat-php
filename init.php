@@ -43,6 +43,7 @@ require_once __DIR__ . '/src/Resource/Customer.php';
 require_once __DIR__ . '/src/Resource/Product.php';
 require_once __DIR__ . '/src/Resource/Refund.php';
 require_once __DIR__ . '/src/Resource/WebhookEvent.php';
+require_once __DIR__ . '/src/Resource/Commission.php';
 
 // Services
 require_once __DIR__ . '/src/Service/AbstractService.php';
@@ -51,6 +52,7 @@ require_once __DIR__ . '/src/Service/PaymentService.php';
 require_once __DIR__ . '/src/Service/CustomerService.php';
 require_once __DIR__ . '/src/Service/ProductService.php';
 require_once __DIR__ . '/src/Service/TransactionService.php';
+require_once __DIR__ . '/src/Service/CommissionService.php';
 
 // Utilities
 require_once __DIR__ . '/src/Util/RequestOptions.php';
