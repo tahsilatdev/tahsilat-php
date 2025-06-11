@@ -9,6 +9,7 @@ use Tahsilat\Service\PaymentService;
 use Tahsilat\Service\ProductService;
 use Tahsilat\Service\TokenService;
 use Tahsilat\Service\TransactionService;
+use Tahsilat\Service\BinLookupService;
 
 /**
  * Client for interacting with the Tahsilat API
@@ -19,6 +20,7 @@ use Tahsilat\Service\TransactionService;
  * @property ProductService $products
  * @property TokenService $tokens
  * @property CommissionService $commissions
+ * @property BinLookupService $bin_lookup
  *
  * @package Tahsilat
  */
@@ -167,6 +169,7 @@ class TahsilatClient
             'products' => 'Tahsilat\\Service\\ProductService',
             'tokens' => 'Tahsilat\\Service\\TokenService',
             'commissions' => 'Tahsilat\\Service\\CommissionService',
+            'bin_lookup' => 'Tahsilat\\Service\\BinLookupService',
         ];
 
         return isset($services[$name]) ? $services[$name] : null;
