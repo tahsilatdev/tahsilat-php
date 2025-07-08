@@ -1,5 +1,7 @@
 <?php
 
+error_reporting(E_ALL & ~E_DEPRECATED & ~E_USER_DEPRECATED);
+
 /**
  * Tahsilat PHP SDK
  *
@@ -45,6 +47,7 @@ require_once __DIR__ . '/src/Resource/Refund.php';
 require_once __DIR__ . '/src/Resource/WebhookEvent.php';
 require_once __DIR__ . '/src/Resource/Commission.php';
 require_once __DIR__ . '/src/Resource/BinLookup.php';
+require_once __DIR__ . '/src/Resource/TransactionResult.php';
 
 // Services
 require_once __DIR__ . '/src/Service/AbstractService.php';
