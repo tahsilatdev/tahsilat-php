@@ -12,7 +12,7 @@ class Tahsilat
     /**
      * @var string SDK Version
      */
-    const VERSION = '1.0.2';
+    const VERSION = '1.1.6';
 
     /**
      * @var string The Tahsilat API base URL
