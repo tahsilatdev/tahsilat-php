@@ -58,7 +58,7 @@ echo $customer->id; // Customer ID
 ```php
 $product = $tahsilat->products->create([
     'product_name' => 'Premium Subscription',
-    'price' => 99.99,
+    'price' => 9999,
     'quantity' => 1,
     'description' => 'Monthly premium subscription',
     'metadata' => [
@@ -74,20 +74,20 @@ echo $product->id; // Product ID
 ```php
 // With products array
 $payment = $tahsilat->payments->create([
-    'amount' => 199.99,
+    'amount' => 19999,
     'currency' => 'TRY',
     'installment_count' => 1,
     'redirect_url' => 'https://example.com/payment/callback',
     'products' => [
         [
             'product_name' => 'Product 1',
-            'price' => 99.99,
+            'price' => 9999,
             'quantity' => 1,
             'description' => 'First product'
         ],
         [
             'product_name' => 'Product 2',
-            'price' => 100.00,
+            'price' => 10000,
             'quantity' => 1,
             'description' => 'Second product'
         ]
@@ -99,7 +99,7 @@ $payment = $tahsilat->payments->create([
 
 // Or with product IDs
 $payment = $tahsilat->payments->create([
-    'amount' => 199.99,
+    'amount' => 19999,
     'currency' => 'TRY',
     'installment_count' => 1,
     'redirect_url' => 'https://example.com/payment/callback',
@@ -109,7 +109,7 @@ $payment = $tahsilat->payments->create([
 
 // With white label (card details required)
 $payment = $tahsilat->payments->create([
-    'amount' => 199.99,
+    'amount' => 19999,
     'currency' => 'TRY',
     'white_label' => true,
     'cardholder_name' => 'John Doe',
@@ -121,7 +121,7 @@ $payment = $tahsilat->payments->create([
     'products' => [
         [
             'product_name' => 'Test Product',
-            'price' => 199.99,
+            'price' => 19999,
             'quantity' => 1,
             'description' => 'Test description'
         ]
@@ -166,7 +166,7 @@ $tahsilat->setAccessToken('new_access_token');
 ```php
 try {
     $payment = $tahsilat->payments->create([
-        'amount' => 100.00,
+        'amount' => 10000,
         'currency' => 'TRY'
     ]);
 } catch (\Tahsilat\Exception\ApiErrorException $e) {
