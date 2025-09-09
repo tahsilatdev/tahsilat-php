@@ -12,12 +12,16 @@ class Tahsilat
     /**
      * @var string SDK Version
      */
-    const VERSION = '1.0.1';
+    const VERSION = '1.0.2';
 
     /**
      * @var string The Tahsilat API base URL
      */
-    const API_BASE = 'https://api.tahsilat.dev/v1/';
+    const API_LIVE_BASE = 'https://api.tahsilat.com/v1/';
+    /**
+     * @var string The Tahsilat API base URL
+     */
+    const API_SANDBOX_BASE = 'https://api.sandbox.tahsilat.com/v1/';
 
     /**
      * @var string|null The API key to be used for requests
@@ -228,12 +232,47 @@ class Tahsilat
     }
 
     /**
-     * Gets the API base URL
+     * Gets the API base URL based on the API key
+     *
+     * If an API key contains 'test', returns sandbox URL
+     * Otherwise returns live URL
      *
      * @return string The API base URL
      */
     public static function getApiBase()
     {
-        return self::API_BASE;
+        $apiKey = self::getApiKey();
+
+        // If no API key is set, default to live (this will likely cause an auth error later)
+        if (!$apiKey) {
+            return self::API_LIVE_BASE;
+        }
+
+        // Check if the API key contains 'test' to determine the environment
+        if (strpos($apiKey, 'test') !== false) {
+            return self::API_SANDBOX_BASE;
+        }
+
+        return self::API_LIVE_BASE;
+    }
+
+    /**
+     * Check if currently using sandbox environment
+     *
+     * @return bool True if using sandbox, false if using live
+     */
+    public static function isSandbox()
+    {
+        return self::getApiBase() === self::API_SANDBOX_BASE;
+    }
+
+    /**
+     * Check if currently using a live environment
+     *
+     * @return bool True if using live, false if using sandbox
+     */
+    public static function isLive()
+    {
+        return self::getApiBase() === self::API_LIVE_BASE;
     }
 }
