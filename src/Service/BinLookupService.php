@@ -22,7 +22,7 @@ class BinLookupService extends AbstractService
      */
     public function detail($params = [], $opts = [])
     {
-        $response = $this->request('post', '/bin-lookup', $params, $opts);
+        $response = $this->request('get', '/bin-lookup', $params, $opts);
 
         return new BinLookup($response);
     }
