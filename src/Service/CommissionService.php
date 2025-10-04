@@ -22,7 +22,7 @@ class CommissionService extends AbstractService
      */
     public function search($params = [], $opts = [])
     {
-        $response = $this->request('post', '/pos/commissions', $params, $opts);
+        $response = $this->request('get', '/pos/commissions', $params, $opts);
 
         return new Commission($response);
     }

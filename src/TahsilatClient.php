@@ -3,6 +3,7 @@
 namespace Tahsilat;
 
 use Tahsilat\Exception\ApiErrorException;
+use Tahsilat\Exception\AuthenticationException;
 use Tahsilat\Service\CommissionService;
 use Tahsilat\Service\CustomerService;
 use Tahsilat\Service\PaymentService;
@@ -190,14 +191,22 @@ class TahsilatClient
      *
      * @param string $apiKey The API key
      * @return void
+     * @throws ApiErrorException
+     * @throws AuthenticationException
      */
     public function setApiKey($apiKey)
     {
         $this->apiKey = $apiKey;
         Tahsilat::setApiKey($apiKey);
 
-        // Refresh token with new API key
-        $this->fetchAccessToken();
+        // Refresh token with a new API key
+        try {
+            $this->fetchAccessToken();
+        } catch (ApiErrorException $e) {
+            throw $e;
+        } catch (Exception\AuthenticationException $e) {
+            throw $e;
+        }
     }
 
     /**

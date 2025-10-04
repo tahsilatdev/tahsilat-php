@@ -5,16 +5,18 @@ namespace Tahsilat\Resource;
 /**
  * Commission resource
  *
- * @property int $id Commission ID
- * @property int $company_pos_credential_id POS credential ID
  * @property int $merchant_id Merchant ID
+ * @property int|null $card_family_id Card family ID
+ * @property int|null $card_segment_type_id Card segment type ID
  * @property int $installment Installment count
+ * @property string $installment_text Human-readable installment text (e.g. "Tek çekim", "2 Taksit")
  * @property float $commission_rate Commission rate percentage
  * @property int $commission_by Commission payer (1: Merchant, 2: Customer)
  * @property string $commission_by_text Commission payer text ("Üye İşyeri" or "Müşteri")
- * @property string $created_at Creation timestamp
- * @property string $updated_at Update timestamp
- * @property array $company_pos_credential POS credential details
+ * @property string $created_at Creation timestamp (ISO 8601)
+ * @property string $updated_at Update timestamp (ISO 8601)
+ * @property array|null $card_family Card family details (name, slug, logo_url, timestamps)
+ * @property array|null $card_segment_type Card segment type details (name, slug, timestamps)
  *
  * @package Tahsilat\Resource
  */
@@ -27,7 +29,7 @@ class Commission extends ApiResource
     const COMMISSION_BY_CUSTOMER = 2;
 
     /**
-     * Check if commission is paid by merchant
+     * Check if commission is paid by a merchant
      *
      * @return bool
      */
@@ -37,7 +39,7 @@ class Commission extends ApiResource
     }
 
     /**
-     * Check if commission is paid by customer
+     * Check if commission is paid by the customer
      *
      * @return bool
      */
