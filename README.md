@@ -1,115 +1,115 @@
 # Tahsilat PHP SDK
 
-A PHP SDK for Tahsilat Payment Gateway.
+Tahsilat Payment Gateway için resmi PHP SDK.
 
-## Requirements
+## Gereksinimler
 
-- PHP 5.6 or higher
+- PHP 5.4 veya üzeri
 - cURL extension
 - JSON extension
 - mbstring extension
 
-## Installation
+## Kurulum
 
-Install via Composer:
-
+Composer ile kurulum:
 ```bash
 composer require tahsilat/tahsilat-php
 ```
 
-Or manually include the SDK:
-
+Veya manuel olarak dahil edin:
 ```php
 require_once '/path/to/tahsilat-php/init.php';
 ```
 
-## Quick Start
+## Hızlı Başlangıç
 
-### Initialize the Client
-
+### Client Başlatma
 ```php
-// Using TahsilatClient (recommended)
-$tahsilat = new \Tahsilat\TahsilatClient('sk_test_YOUR_API_KEY');
-
-// Or using static configuration
-\Tahsilat\Tahsilat::setApiKey('sk_test_YOUR_API_KEY');
+$tahsilat = new \Tahsilat\TahsilatClient('sk_test_YOUR_SECRET_KEY');
 ```
 
-### Create a Customer
+> **Önemli:** Sadece secret key'ler (`sk_test_*` veya `sk_live_*`) kabul edilir. Public key'ler (`pk_*`) server-side API çağrıları için kullanılamaz.
 
+### Müşteri Oluşturma
 ```php
 $customer = $tahsilat->customers->create([
     'name' => 'John',
     'lastname' => 'Doe',
     'email' => 'john.doe@example.com',
     'phone' => '5551234567',
-    'country' => 'tr',
+    'country' => 'TR',
     'city' => 'Istanbul',
+    'district' => 'Kadıköy',
+    'address' => '123 Main St',
+    'zip_code' => '34710',
     'metadata' => [
-        'customer_type' => 'premium'
+        'customer_type' => 'premium',
+        'source' => 'website'
     ]
 ]);
 
-echo $customer->id; // Customer ID
+echo $customer->id;
 ```
 
-### Create a Product
-
+### Ürün Oluşturma
 ```php
 $product = $tahsilat->products->create([
     'product_name' => 'Premium Subscription',
-    'price' => 9999,
-    'quantity' => 1,
-    'description' => 'Monthly premium subscription',
+    'price' => 9999, // kuruş cinsinden (99.99 TL)
+    'description' => 'Aylık premium üyelik',
     'metadata' => [
         'category' => 'subscription'
     ]
 ]);
 
-echo $product->id; // Product ID
+echo $product->id;
 ```
 
-### Create a Payment
+### Ödeme Oluşturma
 
+#### Ürün Bilgileri ile
 ```php
-// With products array
 $payment = $tahsilat->payments->create([
-    'amount' => 19999,
+    'amount' => 20000, // kuruş cinsinden (200.00 TL)
     'currency' => 'TRY',
-    'installment_count' => 1,
     'redirect_url' => 'https://example.com/payment/callback',
     'products' => [
         [
-            'product_name' => 'Product 1',
-            'price' => 9999,
-            'quantity' => 1,
-            'description' => 'First product'
+            'product_name' => 'Ürün 1',
+            'price' => 10000,
+            'description' => 'Birinci ürün'
         ],
         [
-            'product_name' => 'Product 2',
+            'product_name' => 'Ürün 2',
             'price' => 10000,
-            'quantity' => 1,
-            'description' => 'Second product'
+            'description' => 'İkinci ürün'
         ]
     ],
     'metadata' => [
         'order_id' => 'order_12345'
-    ]
+    ],
+    'description' => 'Sipariş #12345'
 ]);
 
-// Or with product IDs
+echo $payment->payment_page_url; // Ödeme sayfası URL'i
+echo $payment->transaction_id;   // İşlem ID
+```
+
+#### Kayıtlı Ürün ID'leri ile
+```php
 $payment = $tahsilat->payments->create([
-    'amount' => 19999,
+    'amount' => 20000,
     'currency' => 'TRY',
-    'installment_count' => 1,
     'redirect_url' => 'https://example.com/payment/callback',
-    'product_ids' => ['55437751141488', '84920468860151'],
-    'customer_id' => '20585467989184'
+    'product_ids' => [55437751141488, 84920468860151],
+    'customer_id' => 20585467989184
 ]);
+```
 
-// With white label (card details required)
+#### White Label (Kart Bilgileri ile)
+```php
 $payment = $tahsilat->payments->create([
-    'amount' => 19999,
+    'amount' => 20000,
     'currency' => 'TRY',
     'white_label' => true,
     'cardholder_name' => 'John Doe',
@@ -120,76 +120,197 @@ $payment = $tahsilat->payments->create([
     'redirect_url' => 'https://example.com/payment/callback',
     'products' => [
         [
-            'product_name' => 'Test Product',
-            'price' => 19999,
-            'quantity' => 1,
-            'description' => 'Test description'
+            'product_name' => 'Test Ürün',
+            'price' => 20000,
+            'description' => 'Test açıklaması'
         ]
     ]
 ]);
-
-echo $payment->redirect_url; // 3DS redirect URL
 ```
 
-## Configuration
-
-### Set Custom Configuration
-
+### İşlem Sorgulama
 ```php
-$tahsilat = new \Tahsilat\TahsilatClient('sk_test_YOUR_API_KEY', [
+$transaction = $tahsilat->transactions->retrieve(78810412652494);
+
+echo $transaction->transaction_id;
+echo $transaction->payment_status_text; // success, fail, incomplete
+echo $transaction->transaction_status_text; // completed, pending, cancelled
+echo $transaction->amount;
+echo $transaction->formatted_amount;
+
+// Başarı kontrolü
+if ($transaction->isSuccess()) {
+    echo "Ödeme başarılı!";
+}
+
+if ($transaction->isFail()) {
+    echo "Ödeme başarısız: " . $transaction->transaction_message;
+}
+```
+
+### İade İşlemi
+```php
+$refund = $tahsilat->transactions->refund([
+    'transaction_id' => 78810412652494,
+    'amount' => 5000, // Kısmi iade (50.00 TL)
+    'description' => 'Müşteri talebi ile iade'
+]);
+
+if ($refund->isSuccess()) {
+    echo $refund->getMessage(); // "İade talebi başarıyla oluşturuldu..."
+}
+```
+
+### BIN Sorgulama
+```php
+$bin = $tahsilat->binLookup->detail([
+    'bin' => '489455'
+]);
+
+echo $bin->bank_name;
+echo $bin->card_type;    // credit, debit
+echo $bin->card_brand;   // visa, mastercard
+```
+
+### Komisyon Sorgulama
+```php
+$commissions = $tahsilat->commissions->search([
+    'amount' => 10000,
+    'currency' => 'TRY',
+    'bin' => '489455'
+]);
+```
+
+## Response Kullanımı
+
+Tüm API yanıtları resource objeleri olarak döner. Bu objeler üzerinde çeşitli metodlar kullanabilirsiniz:
+```php
+$transaction = $tahsilat->transactions->retrieve(78810412652494);
+
+// Tek değer alma
+echo $transaction->amount;
+echo $transaction->get('amount');
+echo $transaction->get('nonexistent_field', 'default_value');
+
+// Tüm veriyi array olarak alma
+$data = $transaction->toArray();
+print_r($data);
+
+// JSON olarak alma
+echo $transaction->toJson();
+echo $transaction->toJson(JSON_PRETTY_PRINT);
+
+// Değer kontrolü
+if ($transaction->has('metadata')) {
+    // metadata alanı mevcut
+}
+
+if ($transaction->isNull('transaction_code')) {
+    // transaction_code null
+}
+```
+
+## Konfigürasyon
+```php
+$tahsilat = new \Tahsilat\TahsilatClient('sk_test_YOUR_SECRET_KEY', [
     'max_retries' => 5,
     'timeout' => 120,
     'connect_timeout' => 60,
     'verify_ssl_certs' => true
 ]);
 
-// Or using setters
+// Veya setter ile
 $tahsilat->setConfig('timeout', 120);
 ```
 
-### Using Getter/Setter Methods
-
+## Hata Yönetimi
 ```php
-// Get API key
-$apiKey = $tahsilat->getApiKey();
+use Tahsilat\Exception\ApiErrorException;
+use Tahsilat\Exception\AuthenticationException;
+use Tahsilat\Exception\InvalidRequestException;
+use Tahsilat\Exception\NetworkException;
+use Tahsilat\Exception\TahsilatException;
 
-// Set new API key
-$tahsilat->setApiKey('sk_live_NEW_API_KEY');
-
-// Get/Set access token
-$token = $tahsilat->getAccessToken();
-$tahsilat->setAccessToken('new_access_token');
-```
-
-## Error Handling
-
-```php
 try {
     $payment = $tahsilat->payments->create([
         'amount' => 10000,
         'currency' => 'TRY'
     ]);
-} catch (\Tahsilat\Exception\ApiErrorException $e) {
-    echo 'API Error: ' . $e->getMessage();
-    echo 'Error Code: ' . $e->getErrorCode();
+} catch (AuthenticationException $e) {
+    // Geçersiz API key
+    echo 'Kimlik doğrulama hatası: ' . $e->getMessage();
+} catch (InvalidRequestException $e) {
+    // Geçersiz istek (örn: işlem bulunamadı)
+    echo 'Geçersiz istek: ' . $e->getMessage();
+} catch (ApiErrorException $e) {
+    // API hatası
+    echo 'API Hatası: ' . $e->getMessage();
+    echo 'Hata Kodu: ' . $e->getErrorCode();
     print_r($e->getResponseData());
-} catch (\Tahsilat\Exception\NetworkException $e) {
-    echo 'Network Error: ' . $e->getMessage();
-} catch (\Tahsilat\Exception\TahsilatException $e) {
-    echo 'General Error: ' . $e->getMessage();
+} catch (NetworkException $e) {
+    // Ağ hatası
+    echo 'Ağ Hatası: ' . $e->getMessage();
+} catch (TahsilatException $e) {
+    // Genel SDK hatası
+    echo 'Hata: ' . $e->getMessage();
 }
 ```
 
-## API Keys
+## API Key Türleri
 
-The SDK supports different API key types:
-- `sk_test_*` - Secret key for test environment
-- `pk_test_*` - Public key for test environment
-- `sk_live_*` - Secret key for production
-- `pk_live_*` - Public key for production
+| Key Türü | Format | Kullanım |
+|----------|--------|----------|
+| Secret Test | `sk_test_*` | Test ortamı - tam erişim |
+| Secret Live | `sk_live_*` | Canlı ortam - tam erişim |
 
-Public keys can only initiate payments, while secret keys have full access to all API endpoints.
+> **Not:** Public key'ler (`pk_test_*`, `pk_live_*`) bu SDK ile kullanılamaz. Client-side işlemler için JavaScript SDK kullanın.
 
-## License
+## Webhook Doğrulama
+```php
+use Tahsilat\Util\Webhook;
 
-MIT License - see LICENSE file for details.
+$payload = file_get_contents('php://input');
+$signature = $_SERVER['HTTP_X_TAHSILAT_SIGNATURE'];
+$webhookSecret = 'whsec_your_webhook_secret';
+
+try {
+    $event = Webhook::constructEvent($payload, $signature, $webhookSecret);
+    
+    switch ($event->type) {
+        case 'payment.success':
+            $transaction = $event->data;
+            // Ödeme başarılı işlemleri
+            break;
+        case 'payment.failed':
+            // Ödeme başarısız işlemleri
+            break;
+        case 'refund.completed':
+            // İade tamamlandı işlemleri
+            break;
+    }
+    
+    http_response_code(200);
+} catch (\Tahsilat\Exception\SignatureVerificationException $e) {
+    http_response_code(400);
+    echo 'Geçersiz imza';
+}
+```
+
+## PHP Sürüm Uyumluluğu
+
+Bu SDK PHP 5.4'ten PHP 8.4'e kadar tüm sürümlerle uyumludur.
+
+| PHP Sürümü | Durum |
+|------------|-------|
+| 5.4 - 5.6 | ✅ Destekleniyor |
+| 7.0 - 7.4 | ✅ Destekleniyor |
+| 8.0 - 8.4 | ✅ Destekleniyor |
+
+## Lisans
+
+MIT License - detaylar için LICENSE dosyasına bakın.
+
+## Destek
+
+- Dokümantasyon: [https://docs.tahsilat.com](https://docs.tahsilat.com)
+- E-posta: destek@tahsilat.com
