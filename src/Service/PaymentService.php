@@ -27,9 +27,18 @@ class PaymentService extends AbstractService
             $params['products'] = json_encode($params['products']);
         }
 
-        // Convert metadata to JSON if provided
+        // Convert metadata to indexed key-value array format
         if (isset($params['metadata']) && is_array($params['metadata'])) {
-            $params['metadata'] = json_encode($params['metadata']);
+            $formattedMetadata = [];
+            $index = 0;
+            foreach ($params['metadata'] as $key => $value) {
+                $formattedMetadata[$index] = [
+                    'key' => (string) $key,
+                    'value' => (string) $value
+                ];
+                $index++;
+            }
+            $params['metadata'] = $formattedMetadata;
         }
 
         // Make request

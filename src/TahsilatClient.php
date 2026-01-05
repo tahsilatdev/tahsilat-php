@@ -55,18 +55,41 @@ class TahsilatClient
      */
     public function __construct($apiKey, $config = [])
     {
+        $this->validateApiKey($apiKey);
         $this->apiKey = $apiKey;
 
-        // Set global API key
         Tahsilat::setApiKey($apiKey);
 
-        // Apply configuration
         $this->config = array_merge($this->getDefaultConfig(), $config);
         $this->applyConfig();
 
-        // Auto-fetch token on initialization
         if (!isset($config['skip_token_fetch']) || !$config['skip_token_fetch']) {
             $this->fetchAccessToken();
+        }
+    }
+
+    /**
+     * Validate API key format
+     *
+     * @param string $apiKey The API key to validate
+     * @return void
+     * @throws AuthenticationException When API key is invalid
+     */
+    private function validateApiKey($apiKey)
+    {
+        if (empty($apiKey)) {
+            throw new AuthenticationException('API key is required');
+        }
+
+        if (!is_string($apiKey)) {
+            throw new AuthenticationException('API key must be a string');
+        }
+
+        if (!preg_match('/^sk_(live|test)_[a-zA-Z0-9]+$/', $apiKey)) {
+            throw new AuthenticationException(
+                'Invalid API key format. API key must start with "sk_live_" or "sk_test_". ' .
+                'Public keys (pk_*) cannot be used for server-side API calls.'
+            );
         }
     }
 
@@ -196,10 +219,10 @@ class TahsilatClient
      */
     public function setApiKey($apiKey)
     {
+        $this->validateApiKey($apiKey);
         $this->apiKey = $apiKey;
         Tahsilat::setApiKey($apiKey);
 
-        // Refresh token with a new API key
         try {
             $this->fetchAccessToken();
         } catch (ApiErrorException $e) {

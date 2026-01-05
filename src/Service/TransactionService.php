@@ -35,7 +35,11 @@ class TransactionService extends AbstractService
             return new TransactionResult($response);
         } catch (ApiErrorException $e) {
             if ($e->getErrorCode() === 2004 || $e->getCode() === 404) {
-                return null;
+                throw new InvalidRequestException(
+                    "Transaction not found: {$transactionId}",
+                    404,
+                    $e->getErrorCode()
+                );
             }
 
             throw $e;
