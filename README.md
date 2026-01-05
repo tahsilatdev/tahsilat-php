@@ -106,28 +106,6 @@ $payment = $tahsilat->payments->create([
 ]);
 ```
 
-#### White Label (Kart Bilgileri ile)
-```php
-$payment = $tahsilat->payments->create([
-    'amount' => 20000,
-    'currency' => 'TRY',
-    'white_label' => true,
-    'cardholder_name' => 'John Doe',
-    'card_number' => '4894554084788683',
-    'expiry_month' => '12',
-    'expiry_year' => '28',
-    'cvv' => '123',
-    'redirect_url' => 'https://example.com/payment/callback',
-    'products' => [
-        [
-            'product_name' => 'Test Ürün',
-            'price' => 20000,
-            'description' => 'Test açıklaması'
-        ]
-    ]
-]);
-```
-
 ### İşlem Sorgulama
 ```php
 $transaction = $tahsilat->transactions->retrieve(78810412652494);
