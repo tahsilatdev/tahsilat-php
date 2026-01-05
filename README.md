@@ -152,23 +152,19 @@ echo $bin->card_brand;   // visa, mastercard
 
 ### Komisyon Sorgulama
 ```php
-$commissions = $tahsilat->commissions->search([
-    'amount' => 10000,
-    'currency' => 'TRY',
-    'bin' => '489455'
-]);
+$commissions = $tahsilat->commissions->search();
 ```
 
 ## Response Kullanımı
 
 Tüm API yanıtları resource objeleri olarak döner. Bu objeler üzerinde çeşitli metodlar kullanabilirsiniz:
 ```php
-$transaction = $tahsilat->transactions->retrieve(78810412652494);
+$transaction = $tahsilat->transactions->retrieve(11810465249113);
 
 // Tek değer alma
 echo $transaction->amount;
 echo $transaction->get('amount');
-echo $transaction->get('nonexistent_field', 'default_value');
+echo $transaction->get('transaction_id');
 
 // Tüm veriyi array olarak alma
 $data = $transaction->toArray();
