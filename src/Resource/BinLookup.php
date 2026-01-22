@@ -1,18 +1,20 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Tahsilat\Resource;
 
 /**
- * Customer resource
+ * BinLookup resource
  *
- * @property integer $bank_code Transaction ID
- * @property string $bank_name bank name
- * @property string $bank_image bank image URL
- * @property string bin_number Bin number
- * @property string $domestic_intl Domestic or International
- * @property string $card_brand Card brand
- * @property string $card_brand_image_url Card brand image URL
- * @property string $card_type Card type
+ * @property int $bank_code Bank code
+ * @property string $bank_name Bank name
+ * @property string|null $bank_image Bank image URL
+ * @property string|null $bin_number BIN number
+ * @property string|null $domestic_intl Domestic or International indicator
+ * @property string|null $card_brand Card brand (visa, mastercard, etc.)
+ * @property string|null $card_brand_image_url Card brand image URL
+ * @property string|null $card_type Card type (credit, debit)
  *
  * @package Tahsilat\Resource
  */

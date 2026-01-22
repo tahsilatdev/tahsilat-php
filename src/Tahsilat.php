@@ -1,9 +1,13 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Tahsilat;
 
 /**
  * Class Tahsilat
+ *
+ * Main configuration class for the Tahsilat SDK
  *
  * @package Tahsilat
  */
@@ -12,56 +16,62 @@ class Tahsilat
     /**
      * @var string SDK Version
      */
-    const VERSION = '1.1.6';
+    public const VERSION = '2.0.0';
 
     /**
-     * @var string The Tahsilat API base URL
+     * @var string Minimum required PHP version
      */
-    const API_LIVE_BASE = 'https://api.tahsilat.com/v1/';
+    public const MIN_PHP_VERSION = '7.2.0';
+
     /**
-     * @var string The Tahsilat API base URL
+     * @var string The Tahsilat API base URL for live environment
      */
-    const API_SANDBOX_BASE = 'https://api.sandbox.tahsilat.com/v1/';
+    public const API_LIVE_BASE = 'https://api.tahsilat.com/v1/';
+
+    /**
+     * @var string The Tahsilat API base URL for sandbox environment
+     */
+    public const API_SANDBOX_BASE = 'https://api.sandbox.tahsilat.com/v1/';
 
     /**
      * @var string|null The API key to be used for requests
      */
-    private static $apiKey;
+    private static ?string $apiKey = null;
 
     /**
      * @var string|null The access token for authenticated requests
      */
-    private static $accessToken;
+    private static ?string $accessToken = null;
 
     /**
      * @var string The API version
      */
-    private static $apiVersion = 'v1';
+    private static string $apiVersion = 'v1';
 
     /**
      * @var int Maximum number of request retries
      */
-    private static $maxRetries = 3;
+    private static int $maxRetries = 3;
 
     /**
      * @var int Connection timeout in seconds
      */
-    private static $connectTimeout = 30;
+    private static int $connectTimeout = 30;
 
     /**
      * @var int Request timeout in seconds
      */
-    private static $timeout = 80;
+    private static int $timeout = 80;
 
     /**
      * @var bool Whether to verify SSL certificates
      */
-    private static $verifySslCerts = true;
+    private static bool $verifySslCerts = true;
 
     /**
      * @var string|null Custom CA bundle path
      */
-    private static $caBundlePath = null;
+    private static ?string $caBundlePath = null;
 
     /**
      * Sets the API key to be used for requests
@@ -69,7 +79,7 @@ class Tahsilat
      * @param string $apiKey The API key
      * @return void
      */
-    public static function setApiKey($apiKey)
+    public static function setApiKey(string $apiKey): void
     {
         self::$apiKey = $apiKey;
     }
@@ -79,7 +89,7 @@ class Tahsilat
      *
      * @return string|null The API key
      */
-    public static function getApiKey()
+    public static function getApiKey(): ?string
     {
         return self::$apiKey;
     }
@@ -90,7 +100,7 @@ class Tahsilat
      * @param string $accessToken The access token
      * @return void
      */
-    public static function setAccessToken($accessToken)
+    public static function setAccessToken(string $accessToken): void
     {
         self::$accessToken = $accessToken;
     }
@@ -100,7 +110,7 @@ class Tahsilat
      *
      * @return string|null The access token
      */
-    public static function getAccessToken()
+    public static function getAccessToken(): ?string
     {
         return self::$accessToken;
     }
@@ -111,7 +121,7 @@ class Tahsilat
      * @param string $apiVersion The API version
      * @return void
      */
-    public static function setApiVersion($apiVersion)
+    public static function setApiVersion(string $apiVersion): void
     {
         self::$apiVersion = $apiVersion;
     }
@@ -121,7 +131,7 @@ class Tahsilat
      *
      * @return string The API version
      */
-    public static function getApiVersion()
+    public static function getApiVersion(): string
     {
         return self::$apiVersion;
     }
@@ -132,9 +142,9 @@ class Tahsilat
      * @param int $maxRetries The maximum number of retries
      * @return void
      */
-    public static function setMaxRetries($maxRetries)
+    public static function setMaxRetries(int $maxRetries): void
     {
-        self::$maxRetries = $maxRetries;
+        self::$maxRetries = max(0, $maxRetries);
     }
 
     /**
@@ -142,7 +152,7 @@ class Tahsilat
      *
      * @return int The maximum number of retries
      */
-    public static function getMaxRetries()
+    public static function getMaxRetries(): int
     {
         return self::$maxRetries;
     }
@@ -153,9 +163,9 @@ class Tahsilat
      * @param int $seconds The connection timeout in seconds
      * @return void
      */
-    public static function setConnectTimeout($seconds)
+    public static function setConnectTimeout(int $seconds): void
     {
-        self::$connectTimeout = $seconds;
+        self::$connectTimeout = max(1, $seconds);
     }
 
     /**
@@ -163,7 +173,7 @@ class Tahsilat
      *
      * @return int The connection timeout in seconds
      */
-    public static function getConnectTimeout()
+    public static function getConnectTimeout(): int
     {
         return self::$connectTimeout;
     }
@@ -174,9 +184,9 @@ class Tahsilat
      * @param int $seconds The request timeout in seconds
      * @return void
      */
-    public static function setTimeout($seconds)
+    public static function setTimeout(int $seconds): void
     {
-        self::$timeout = $seconds;
+        self::$timeout = max(1, $seconds);
     }
 
     /**
@@ -184,7 +194,7 @@ class Tahsilat
      *
      * @return int The request timeout in seconds
      */
-    public static function getTimeout()
+    public static function getTimeout(): int
     {
         return self::$timeout;
     }
@@ -195,7 +205,7 @@ class Tahsilat
      * @param bool $verify Whether to verify SSL certificates
      * @return void
      */
-    public static function setVerifySslCerts($verify)
+    public static function setVerifySslCerts(bool $verify): void
     {
         self::$verifySslCerts = $verify;
     }
@@ -205,7 +215,7 @@ class Tahsilat
      *
      * @return bool Whether SSL certificates are being verified
      */
-    public static function getVerifySslCerts()
+    public static function getVerifySslCerts(): bool
     {
         return self::$verifySslCerts;
     }
@@ -216,7 +226,7 @@ class Tahsilat
      * @param string|null $path The CA bundle path
      * @return void
      */
-    public static function setCaBundlePath($path)
+    public static function setCaBundlePath(?string $path): void
     {
         self::$caBundlePath = $path;
     }
@@ -226,7 +236,7 @@ class Tahsilat
      *
      * @return string|null The CA bundle path
      */
-    public static function getCaBundlePath()
+    public static function getCaBundlePath(): ?string
     {
         return self::$caBundlePath;
     }
@@ -239,12 +249,12 @@ class Tahsilat
      *
      * @return string The API base URL
      */
-    public static function getApiBase()
+    public static function getApiBase(): string
     {
         $apiKey = self::getApiKey();
 
         // If no API key is set, default to live (this will likely cause an auth error later)
-        if (!$apiKey) {
+        if ($apiKey === null) {
             return self::API_LIVE_BASE;
         }
 
@@ -261,7 +271,7 @@ class Tahsilat
      *
      * @return bool True if using sandbox, false if using live
      */
-    public static function isSandbox()
+    public static function isSandbox(): bool
     {
         return self::getApiBase() === self::API_SANDBOX_BASE;
     }
@@ -271,8 +281,26 @@ class Tahsilat
      *
      * @return bool True if using live, false if using sandbox
      */
-    public static function isLive()
+    public static function isLive(): bool
     {
         return self::getApiBase() === self::API_LIVE_BASE;
+    }
+
+    /**
+     * Reset all static properties to their default values
+     * Useful for testing
+     *
+     * @return void
+     */
+    public static function reset(): void
+    {
+        self::$apiKey = null;
+        self::$accessToken = null;
+        self::$apiVersion = 'v1';
+        self::$maxRetries = 3;
+        self::$connectTimeout = 30;
+        self::$timeout = 80;
+        self::$verifySslCerts = true;
+        self::$caBundlePath = null;
     }
 }

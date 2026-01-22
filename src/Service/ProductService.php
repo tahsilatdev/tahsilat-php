@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Tahsilat\Service;
 
 use Tahsilat\Exception\AuthenticationException;
@@ -20,17 +22,17 @@ class ProductService extends AbstractService
      * @return Product Product resource
      * @throws AuthenticationException
      */
-    public function create($params = array(), $opts = array())
+    public function create(array $params = [], array $opts = []): Product
     {
         // Convert metadata to indexed key-value array format
         if (isset($params['metadata']) && is_array($params['metadata'])) {
-            $formattedMetadata = array();
+            $formattedMetadata = [];
             $index = 0;
             foreach ($params['metadata'] as $key => $value) {
-                $formattedMetadata[$index] = array(
+                $formattedMetadata[$index] = [
                     'key' => (string) $key,
                     'value' => (string) $value
-                );
+                ];
                 $index++;
             }
             $params['metadata'] = $formattedMetadata;

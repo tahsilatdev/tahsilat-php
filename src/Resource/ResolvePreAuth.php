@@ -1,12 +1,14 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Tahsilat\Resource;
 
 /**
- * Customer resource
+ * ResolvePreAuth resource
  *
- * @property integer $transaction_id Transaction ID
- * @property bool $status status of the pre-authorization
+ * @property int|null $transaction_id Transaction ID
+ * @property bool|null $status Status of the pre-authorization resolution
  *
  * @package Tahsilat\Resource
  */

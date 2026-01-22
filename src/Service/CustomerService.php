@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Tahsilat\Service;
 
 use Tahsilat\Exception\AuthenticationException;
@@ -20,17 +22,17 @@ class CustomerService extends AbstractService
      * @return Customer Customer resource
      * @throws AuthenticationException
      */
-    public function create($params = [], $opts = [])
+    public function create(array $params = [], array $opts = []): Customer
     {
         // Convert metadata to indexed key-value array format
         if (isset($params['metadata']) && is_array($params['metadata'])) {
-            $formattedMetadata = array();
+            $formattedMetadata = [];
             $index = 0;
             foreach ($params['metadata'] as $key => $value) {
-                $formattedMetadata[$index] = array(
+                $formattedMetadata[$index] = [
                     'key' => (string) $key,
                     'value' => (string) $value
-                );
+                ];
                 $index++;
             }
             $params['metadata'] = $formattedMetadata;

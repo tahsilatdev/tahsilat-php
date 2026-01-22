@@ -1,10 +1,13 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Tahsilat\HttpClient;
 
 use Tahsilat\Exception\ApiErrorException;
 use Tahsilat\Exception\NetworkException;
 use Tahsilat\Tahsilat;
+use CurlHandle;
 
 /**
  * cURL based HTTP client implementation
@@ -14,22 +17,24 @@ use Tahsilat\Tahsilat;
 class CurlClient implements HttpClientInterface
 {
     /**
-     * @var resource|false cURL handle
+     * @var CurlHandle|resource|null cURL handle (CurlHandle in PHP 8+, resource in PHP 7.x)
      */
     private $curlHandle;
 
     /**
-     * @var array<string, mixed> Default cURL options
+     * @var array<int, mixed> Default cURL options
      */
-    private $defaultOptions;
+    private array $defaultOptions;
 
     /**
      * @var bool Whether this is a token request
      */
-    private $isTokenRequest = false;
+    private bool $isTokenRequest = false;
 
     /**
      * Constructor
+     *
+     * @throws NetworkException When cURL extension is not available
      */
     public function __construct()
     {
@@ -42,16 +47,18 @@ class CurlClient implements HttpClientInterface
      * @return void
      * @throws NetworkException When cURL extension is not available
      */
-    private function initializeCurl()
+    private function initializeCurl(): void
     {
         if (!extension_loaded('curl')) {
             throw new NetworkException('cURL extension is not available');
         }
 
-        $this->curlHandle = curl_init();
-        if ($this->curlHandle === false) {
+        $handle = curl_init();
+        if ($handle === false) {
             throw new NetworkException('Failed to initialize cURL');
         }
+
+        $this->curlHandle = $handle;
 
         $this->defaultOptions = [
             CURLOPT_RETURNTRANSFER => true,
@@ -61,6 +68,9 @@ class CurlClient implements HttpClientInterface
             CURLOPT_HTTPHEADER => [],
             CURLOPT_FAILONERROR => false,
             CURLOPT_HTTP_VERSION => CURL_HTTP_VERSION_1_1,
+            // Security: Disable following redirects to prevent SSRF
+            CURLOPT_FOLLOWLOCATION => false,
+            CURLOPT_MAXREDIRS => 0,
         ];
 
         // SSL options - always verify in production
@@ -68,19 +78,26 @@ class CurlClient implements HttpClientInterface
             $this->defaultOptions[CURLOPT_SSL_VERIFYPEER] = true;
             $this->defaultOptions[CURLOPT_SSL_VERIFYHOST] = 2;
 
-            if (Tahsilat::getCaBundlePath()) {
-                $this->defaultOptions[CURLOPT_CAINFO] = Tahsilat::getCaBundlePath();
+            $caBundlePath = Tahsilat::getCaBundlePath();
+            if ($caBundlePath !== null) {
+                $this->defaultOptions[CURLOPT_CAINFO] = $caBundlePath;
             }
         } else {
+            // Warning: Only disable SSL verification in development environments
             $this->defaultOptions[CURLOPT_SSL_VERIFYPEER] = false;
             $this->defaultOptions[CURLOPT_SSL_VERIFYHOST] = 0;
         }
 
         // Set user agent
-        $phpVersion = PHP_VERSION;
         $curlVersion = curl_version();
-        $this->defaultOptions[CURLOPT_USERAGENT] = 'Tahsilat-PHP/' . Tahsilat::VERSION .
-            ' (PHP ' . $phpVersion . '; cURL ' . $curlVersion['version'] . ')';
+        $curlVersionString = is_array($curlVersion) ? ($curlVersion['version'] ?? 'unknown') : 'unknown';
+
+        $this->defaultOptions[CURLOPT_USERAGENT] = sprintf(
+            'Tahsilat-PHP/%s (PHP %s; cURL %s)',
+            Tahsilat::VERSION,
+            PHP_VERSION,
+            $curlVersionString
+        );
     }
 
     /**
@@ -89,7 +106,7 @@ class CurlClient implements HttpClientInterface
      * @param bool $isTokenRequest Whether this is a token request
      * @return void
      */
-    public function setIsTokenRequest($isTokenRequest)
+    public function setIsTokenRequest(bool $isTokenRequest): void
     {
         $this->isTokenRequest = $isTokenRequest;
     }
@@ -97,8 +114,12 @@ class CurlClient implements HttpClientInterface
     /**
      * {@inheritdoc}
      */
-    public function request($method, $url, $headers = [], $params = [])
+    public function request(string $method, string $url, array $headers = [], array $params = []): array
     {
+        if ($this->curlHandle === null) {
+            $this->initializeCurl();
+        }
+
         $opts = $this->defaultOptions;
         $opts[CURLOPT_URL] = $url;
         $opts[CURLOPT_CUSTOMREQUEST] = strtoupper($method);
@@ -111,15 +132,16 @@ class CurlClient implements HttpClientInterface
         $opts[CURLOPT_HTTPHEADER] = $this->formatHeaders($headers);
 
         // Handle parameters based on method
-        if (strtoupper($method) === 'GET' && !empty($params)) {
-            $opts[CURLOPT_URL] .= '?' . http_build_query($params);
-        } elseif (strtoupper($method) === 'DELETE' && !empty($params)) {
-            $opts[CURLOPT_URL] .= '?' . http_build_query($params);
+        $upperMethod = strtoupper($method);
+        if (($upperMethod === 'GET' || $upperMethod === 'DELETE') && !empty($params)) {
+            $opts[CURLOPT_URL] .= '?' . http_build_query($params, '', '&', PHP_QUERY_RFC3986);
         } elseif (!empty($params)) {
-            if (isset($headers['Content-Type']) && strpos($headers['Content-Type'], 'application/json') !== false) {
-                $opts[CURLOPT_POSTFIELDS] = json_encode($params);
+            $contentType = $headers['Content-Type'] ?? '';
+            if (strpos($contentType, 'application/json') !== false) {
+                $jsonData = json_encode($params, JSON_THROW_ON_ERROR);
+                $opts[CURLOPT_POSTFIELDS] = $jsonData;
             } else {
-                $opts[CURLOPT_POSTFIELDS] = http_build_query($params);
+                $opts[CURLOPT_POSTFIELDS] = http_build_query($params, '', '&', PHP_QUERY_RFC3986);
             }
         }
 
@@ -129,6 +151,7 @@ class CurlClient implements HttpClientInterface
         // Execute request with retries
         $retries = 0;
         $maxRetries = Tahsilat::getMaxRetries();
+        $response = false;
 
         while ($retries <= $maxRetries) {
             $response = curl_exec($this->curlHandle);
@@ -139,7 +162,9 @@ class CurlClient implements HttpClientInterface
 
                 if ($retries < $maxRetries && $this->shouldRetry($errno)) {
                     $retries++;
-                    usleep(min($retries * 500000, 2000000)); // Exponential backoff
+                    // Exponential backoff with jitter (max 2 seconds)
+                    $sleepTime = min($retries * 500000 + random_int(0, 100000), 2000000);
+                    usleep($sleepTime);
                     continue;
                 }
 
@@ -149,21 +174,27 @@ class CurlClient implements HttpClientInterface
             break;
         }
 
+        if (!is_string($response)) {
+            throw new NetworkException('Invalid response from server');
+        }
+
         // Parse response
-        $headerSize = curl_getinfo($this->curlHandle, CURLINFO_HEADER_SIZE);
-        $httpCode = curl_getinfo($this->curlHandle, CURLINFO_HTTP_CODE);
-        $responseHeaders = substr($response, 0, $headerSize);
+        $headerSize = (int) curl_getinfo($this->curlHandle, CURLINFO_HEADER_SIZE);
+        $httpCode = (int) curl_getinfo($this->curlHandle, CURLINFO_HTTP_CODE);
         $responseBody = substr($response, $headerSize);
 
         // Handle empty response
         if (empty($responseBody)) {
-            throw new ApiErrorException("Empty response from API", $httpCode);
+            throw new ApiErrorException('Empty response from API', $httpCode);
         }
 
         // Parse response body
         $data = json_decode($responseBody, true);
         if (json_last_error() !== JSON_ERROR_NONE) {
-            throw new ApiErrorException("Invalid JSON response: " . json_last_error_msg() . ". Response: " . $responseBody, $httpCode);
+            throw new ApiErrorException(
+                sprintf('Invalid JSON response: %s. Response: %s', json_last_error_msg(), substr($responseBody, 0, 500)),
+                $httpCode
+            );
         }
 
         // Check for API errors
@@ -182,7 +213,7 @@ class CurlClient implements HttpClientInterface
      *
      * @return array<string, string> Default headers
      */
-    private function getDefaultHeaders()
+    private function getDefaultHeaders(): array
     {
         $headers = [
             'Accept' => 'application/json',
@@ -193,14 +224,18 @@ class CurlClient implements HttpClientInterface
         // For token requests, always use API key
         // For other requests, use access token if available, otherwise use API key
         if ($this->isTokenRequest) {
-            if (Tahsilat::getApiKey()) {
-                $headers['Authorization'] = 'Bearer ' . Tahsilat::getApiKey();
+            $apiKey = Tahsilat::getApiKey();
+            if ($apiKey !== null) {
+                $headers['Authorization'] = 'Bearer ' . $apiKey;
             }
         } else {
-            if (Tahsilat::getAccessToken()) {
-                $headers['Authorization'] = 'Bearer ' . Tahsilat::getAccessToken();
-            } elseif (Tahsilat::getApiKey()) {
-                $headers['Authorization'] = 'Bearer ' . Tahsilat::getApiKey();
+            $accessToken = Tahsilat::getAccessToken();
+            $apiKey = Tahsilat::getApiKey();
+
+            if ($accessToken !== null) {
+                $headers['Authorization'] = 'Bearer ' . $accessToken;
+            } elseif ($apiKey !== null) {
+                $headers['Authorization'] = 'Bearer ' . $apiKey;
             }
         }
 
@@ -213,10 +248,13 @@ class CurlClient implements HttpClientInterface
      * @param array<string, string> $headers Headers array
      * @return array<int, string> Formatted headers
      */
-    private function formatHeaders($headers)
+    private function formatHeaders(array $headers): array
     {
         $formatted = [];
         foreach ($headers as $key => $value) {
+            // Sanitize header values to prevent header injection
+            $key = str_replace(["\r", "\n"], '', (string) $key);
+            $value = str_replace(["\r", "\n"], '', (string) $value);
             $formatted[] = $key . ': ' . $value;
         }
         return $formatted;
@@ -228,7 +266,7 @@ class CurlClient implements HttpClientInterface
      * @param int $errno cURL error number
      * @return bool Whether to retry
      */
-    private function shouldRetry($errno)
+    private function shouldRetry(int $errno): bool
     {
         $retriableErrors = [
             CURLE_COULDNT_CONNECT,
@@ -237,7 +275,7 @@ class CurlClient implements HttpClientInterface
             CURLE_SSL_CONNECT_ERROR,
         ];
 
-        return in_array($errno, $retriableErrors);
+        return in_array($errno, $retriableErrors, true);
     }
 
     /**
@@ -245,16 +283,16 @@ class CurlClient implements HttpClientInterface
      *
      * @param array<string, mixed> $data Response data
      * @param int $httpCode HTTP status code
-     * @return void
+     * @return never
      * @throws ApiErrorException
      */
-    private function handleApiError($data, $httpCode)
+    private function handleApiError(array $data, int $httpCode): void
     {
-        $message = isset($data['message']) ? $data['message'] : 'Unknown error occurred';
-        $errorCode = isset($data['error_code']) ? $data['error_code'] : null;
+        $message = $data['message'] ?? 'Unknown error occurred';
+        $errorCode = $data['error_code'] ?? null;
 
         // If there are validation errors, append them to the message
-        if (isset($data['errors']) && !empty($data['errors']) && is_array($data['errors'])) {
+        if (isset($data['errors']) && is_array($data['errors']) && !empty($data['errors'])) {
             $validationErrors = [];
             foreach ($data['errors'] as $field => $messages) {
                 if (is_array($messages)) {
@@ -272,18 +310,27 @@ class CurlClient implements HttpClientInterface
         }
 
         // Use error_code as exception code if available, otherwise use HTTP status code
-        $exceptionCode = $errorCode !== null ? $errorCode : $httpCode;
+        $exceptionCode = $errorCode !== null ? (int) $errorCode : $httpCode;
 
         throw new ApiErrorException($message, $exceptionCode, $errorCode, $data);
     }
 
     /**
-     * Destructor
+     * Destructor - cleanup curl handle
+     *
+     * Note: curl_close() is deprecated since PHP 8.0 (no-op) and formally deprecated in 8.5
+     * The handle is automatically cleaned up by PHP's garbage collector
      */
     public function __destruct()
     {
-        if (is_resource($this->curlHandle)) {
-            curl_close($this->curlHandle);
+        // PHP 8.0+: curl_close() has no effect, handle is auto-cleaned by GC
+        // PHP 7.x: we need to explicitly close the handle
+        if (PHP_VERSION_ID < 80000 && $this->curlHandle !== null) {
+            if (is_resource($this->curlHandle) && get_resource_type($this->curlHandle) === 'curl') {
+                curl_close($this->curlHandle);
+            }
         }
+
+        $this->curlHandle = null;
     }
 }

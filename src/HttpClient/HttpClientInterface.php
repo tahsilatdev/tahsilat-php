@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Tahsilat\HttpClient;
 
 /**
@@ -18,5 +20,5 @@ interface HttpClientInterface
      * @param array<string, mixed> $params Request parameters
      * @return array<string, mixed> Response data
      */
-    public function request($method, $url, $headers = [], $params = []);
+    public function request(string $method, string $url, array $headers = [], array $params = []): array;
 }

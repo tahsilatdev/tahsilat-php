@@ -2,21 +2,24 @@
 
 Tahsilat Payment Gateway için resmi PHP SDK.
 
+> ⚠️ **Önemli:** Bu SDK, güvenlik nedeniyle PHP 7.4 ve üzeri sürümleri desteklemektedir. PHP 7.3 ve altı sürümler bilinen güvenlik açıkları içerdiğinden artık desteklenmemektedir. Eğer eski PHP sürümlerinde kullanmanız gerekiyorsa [v1.1.9](https://github.com/tahsilatdev/tahsilat-php/releases/tag/v1.1.9) sürümünü kullanabilirsiniz, ancak bu sürüm artık güncelleme almamaktadır ve kullanımı önerilmemektedir.
+
 ## Gereksinimler
 
-- PHP 5.4 veya üzeri
+- **PHP 7.4.0 veya üzeri** (güvenlik nedeniyle 7.4'ün altındaki sürümler desteklenmemektedir)
 - cURL extension
 - JSON extension
 - mbstring extension
+- OpenSSL extension
 
 ## Kurulum
 
-Composer ile kurulum:
+### Composer ile kurulum (Önerilen):
 ```bash
 composer require tahsilat/tahsilat-php
 ```
 
-Veya manuel olarak dahil edin:
+### Manuel kurulum:
 ```php
 require_once '/path/to/tahsilat-php/init.php';
 ```
@@ -114,7 +117,6 @@ echo $transaction->transaction_id;
 echo $transaction->payment_status_text; // success, fail, incomplete
 echo $transaction->transaction_status_text; // completed, pending, cancelled
 echo $transaction->amount;
-echo $transaction->formatted_amount;
 
 // Başarı kontrolü
 if ($transaction->isSuccess()) {
@@ -133,16 +135,12 @@ $refund = $tahsilat->transactions->refund([
     'amount' => 5000, // Kısmi iade (50.00 TL)
     'description' => 'Müşteri talebi ile iade'
 ]);
-
-if ($refund->isSuccess()) {
-    echo $refund->getMessage(); // "İade talebi başarıyla oluşturuldu..."
-}
 ```
 
 ### BIN Sorgulama
 ```php
 $bin = $tahsilat->binLookup->detail([
-    'bin' => '489455'
+    'bin_number' => '489455'
 ]);
 
 echo $bin->bank_name;
@@ -158,6 +156,7 @@ $commissions = $tahsilat->commissions->search();
 ## Response Kullanımı
 
 Tüm API yanıtları resource objeleri olarak döner. Bu objeler üzerinde çeşitli metodlar kullanabilirsiniz:
+
 ```php
 $transaction = $tahsilat->transactions->retrieve(11810465249113);
 
@@ -185,6 +184,7 @@ if ($transaction->isNull('transaction_code')) {
 ```
 
 ## Konfigürasyon
+
 ```php
 $tahsilat = new \Tahsilat\TahsilatClient('sk_test_YOUR_SECRET_KEY', [
     'max_retries' => 5,
@@ -198,6 +198,7 @@ $tahsilat->setConfig('timeout', 120);
 ```
 
 ## Hata Yönetimi
+
 ```php
 use Tahsilat\Exception\ApiErrorException;
 use Tahsilat\Exception\AuthenticationException;
@@ -240,27 +241,25 @@ try {
 > **Not:** Public key'ler (`pk_test_*`, `pk_live_*`) bu SDK ile kullanılamaz. Client-side işlemler için JavaScript SDK kullanın.
 
 ## Webhook Doğrulama
+
 ```php
 use Tahsilat\Util\Webhook;
 
 $payload = file_get_contents('php://input');
-$signature = $_SERVER['HTTP_X_TAHSILAT_SIGNATURE'];
+$signature = $_SERVER['HTTP_X_TAHSILAT_SIGNATURE'] ?? '';
 $webhookSecret = 'whsec_your_webhook_secret';
 
 try {
     $event = Webhook::constructEvent($payload, $signature, $webhookSecret);
     
-    switch ($event->type) {
-        case 'payment.success':
-            $transaction = $event->data;
-            // Ödeme başarılı işlemleri
-            break;
-        case 'payment.failed':
-            // Ödeme başarısız işlemleri
-            break;
-        case 'refund.completed':
-            // İade tamamlandı işlemleri
-            break;
+    // Event tipine göre işlem yapın
+    if ($event->isSuccess()) {
+        $transactionId = $event->getTransactionId();
+        // Ödeme başarılı işlemleri
+    }
+    
+    if ($event->isFail()) {
+        // Ödeme başarısız işlemleri
     }
     
     http_response_code(200);
@@ -272,13 +271,22 @@ try {
 
 ## PHP Sürüm Uyumluluğu
 
-Bu SDK PHP 5.4'ten PHP 8.4'e kadar tüm sürümlerle uyumludur.
+Bu SDK PHP 7.4'den PHP 8.4'e kadar tüm sürümlerle uyumludur.
 
 | PHP Sürümü | Durum |
 |------------|-------|
-| 5.4 - 5.6 | ✅ Destekleniyor |
-| 7.0 - 7.4 | ✅ Destekleniyor |
-| 8.0 - 8.4 | ✅ Destekleniyor |
+| 5.x - 7.3  | ❌ Desteklenmiyor |
+| 7.4 - 8.5  | ✅ Destekleniyor |
+
+## Güvenlik
+
+Bu SDK aşağıdaki güvenlik önlemlerini içerir:
+
+- **Minimum PHP 7.4 gereksinimi**
+- **SSL sertifika doğrulama** - Varsayılan olarak aktif
+- **Timing-safe string comparison** - Webhook imza doğrulamasında timing attack koruması
+- **Header injection koruması** - HTTP header'larında CR/LF karakterleri temizlenir
+- **SSRF koruması** - HTTP redirect'ler devre dışı
 
 ## Lisans
 
@@ -287,4 +295,4 @@ MIT License - detaylar için LICENSE dosyasına bakın.
 ## Destek
 
 - Dokümantasyon: [https://docs.tahsilat.com](https://docs.tahsilat.com)
-- E-posta: destek@tahsilat.com
+- E-posta: info@tahsilat.com

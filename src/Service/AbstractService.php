@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Tahsilat\Service;
 
 use Tahsilat\Exception\AuthenticationException;
@@ -18,12 +20,12 @@ abstract class AbstractService
     /**
      * @var TahsilatClient The client instance
      */
-    protected $client;
+    protected TahsilatClient $client;
 
     /**
      * @var HttpClientInterface HTTP client instance
      */
-    protected $httpClient;
+    protected HttpClientInterface $httpClient;
 
     /**
      * Constructor
@@ -46,11 +48,13 @@ abstract class AbstractService
      * @return array<string, mixed> Response data
      * @throws AuthenticationException When API key is missing
      */
-    protected function request($method, $path, $params = [], $opts = [])
+    protected function request(string $method, string $path, array $params = [], array $opts = []): array
     {
         // Check API key
-        if (!Tahsilat::getApiKey()) {
-            throw new AuthenticationException('API key is required. Set it using Tahsilat::setApiKey() or instantiate TahsilatClient with an API key.');
+        if (Tahsilat::getApiKey() === null) {
+            throw new AuthenticationException(
+                'API key is required. Set it using Tahsilat::setApiKey() or instantiate TahsilatClient with an API key.'
+            );
         }
 
         // Build URL
@@ -58,12 +62,10 @@ abstract class AbstractService
 
         // Prepare headers
         $headers = [];
-        if (isset($opts['headers'])) {
+        if (isset($opts['headers']) && is_array($opts['headers'])) {
             $headers = $opts['headers'];
             unset($opts['headers']);
         }
-
-        // The CurlClient will handle authorization header based on whether it's a token request
 
         // Set content type for POST requests
         if (strtoupper($method) === 'POST' && !isset($headers['Content-Type'])) {
@@ -87,8 +89,8 @@ abstract class AbstractService
      * @param array<string, mixed> $params Parameters
      * @return string Query string
      */
-    protected function buildQueryString($params)
+    protected function buildQueryString(array $params): string
     {
-        return http_build_query($params);
+        return http_build_query($params, '', '&', PHP_QUERY_RFC3986);
     }
 }

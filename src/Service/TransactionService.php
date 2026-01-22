@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Tahsilat\Service;
 
 use Tahsilat\Exception\ApiErrorException;
@@ -10,26 +12,29 @@ use Tahsilat\Resource\ResolvePreAuth;
 use Tahsilat\Resource\TransactionResult;
 
 /**
- * Service for customer operations
+ * Service for transaction operations
  *
  * @package Tahsilat\Service
  */
 class TransactionService extends AbstractService
 {
     /**
-     * @param $transactionId
-     * @param $opts
-     * @return TransactionResult
+     * Retrieve a transaction by ID
+     *
+     * @param int|string $transactionId Transaction ID
+     * @param array<string, mixed> $opts Request options
+     * @return TransactionResult Transaction result resource
      * @throws AuthenticationException
-     * @throws ApiErrorException|InvalidRequestException
+     * @throws ApiErrorException
+     * @throws InvalidRequestException
      */
-    public function retrieve($transactionId, $opts = [])
+    public function retrieve($transactionId, array $opts = []): TransactionResult
     {
-        try {
-            if (empty($transactionId)) {
-                throw new InvalidRequestException('Transaction ID is required');
-            }
+        if (empty($transactionId)) {
+            throw new InvalidRequestException('Transaction ID is required');
+        }
 
+        try {
             $response = $this->request('get', '/transaction/' . $transactionId, [], $opts);
 
             return new TransactionResult($response);
@@ -49,12 +54,12 @@ class TransactionService extends AbstractService
     /**
      * Create a new refund
      *
-     * @param array<string, mixed> $params parameters
+     * @param array<string, mixed> $params Refund parameters
      * @param array<string, mixed> $opts Request options
      * @return Refund Refund resource
      * @throws AuthenticationException
      */
-    public function refund($params = [], $opts = [])
+    public function refund(array $params = [], array $opts = []): Refund
     {
         $response = $this->request('post', '/transaction/refund', $params, $opts);
 
@@ -62,12 +67,14 @@ class TransactionService extends AbstractService
     }
 
     /**
-     * @param array<string, mixed> $params parameters
+     * Resolve a pre-authorization
+     *
+     * @param array<string, mixed> $params Pre-auth parameters
      * @param array<string, mixed> $opts Request options
-     * @return ResolvePreAuth
+     * @return ResolvePreAuth ResolvePreAuth resource
      * @throws AuthenticationException
      */
-    public function resolvePreAuth($params = [], $opts = [])
+    public function resolvePreAuth(array $params = [], array $opts = []): ResolvePreAuth
     {
         $response = $this->request('post', '/transaction/resolve-pre-auth', $params, $opts);
 

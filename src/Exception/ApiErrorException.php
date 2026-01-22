@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Tahsilat\Exception;
 
 /**
@@ -10,18 +12,13 @@ namespace Tahsilat\Exception;
 class ApiErrorException extends TahsilatException
 {
     /**
-     * @var array<string, mixed>|null Validation errors
-     */
-    protected $validationErrors;
-
-    /**
      * Get validation errors if any
      *
      * @return array<string, mixed>|null Validation errors
      */
-    public function getValidationErrors()
+    public function getValidationErrors(): ?array
     {
-        if ($this->responseData && isset($this->responseData['errors']) && !empty($this->responseData['errors'])) {
+        if ($this->responseData !== null && isset($this->responseData['errors']) && !empty($this->responseData['errors'])) {
             return $this->responseData['errors'];
         }
         return null;
@@ -32,7 +29,7 @@ class ApiErrorException extends TahsilatException
      *
      * @return bool Whether this is a validation error
      */
-    public function isValidationError()
+    public function isValidationError(): bool
     {
         return $this->errorCode === 901 || $this->getValidationErrors() !== null;
     }

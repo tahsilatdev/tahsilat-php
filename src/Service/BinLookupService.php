@@ -1,26 +1,28 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Tahsilat\Service;
 
 use Tahsilat\Exception\AuthenticationException;
 use Tahsilat\Resource\BinLookup;
 
 /**
- * Service for product operations
+ * Service for BIN lookup operations
  *
  * @package Tahsilat\Service
  */
 class BinLookupService extends AbstractService
 {
     /**
-     * Get commission details
+     * Get BIN details
      *
-     * @param array<string, mixed> $params Commission parameters
+     * @param array<string, mixed> $params BIN lookup parameters
      * @param array<string, mixed> $opts Request options
      * @return BinLookup BinLookup resource
      * @throws AuthenticationException
      */
-    public function detail($params = [], $opts = [])
+    public function detail(array $params = [], array $opts = []): BinLookup
     {
         $response = $this->request('get', '/bin-lookup', $params, $opts);
 

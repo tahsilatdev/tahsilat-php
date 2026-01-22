@@ -1,13 +1,15 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Tahsilat\Resource;
 
 /**
- * Customer resource
+ * Refund resource
  *
- * @property integer $transaction_id Transaction ID
- * @property integer $amount Refund amount
- * @property string $description Refund description
+ * @property int|null $transaction_id Transaction ID
+ * @property int|null $amount Refund amount (in kuruş/cents)
+ * @property string|null $description Refund description
  *
  * @package Tahsilat\Resource
  */

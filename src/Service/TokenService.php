@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Tahsilat\Service;
 
 use Tahsilat\Exception\AuthenticationException;
@@ -19,7 +21,7 @@ class TokenService extends AbstractService
      * @return Token Token resource
      * @throws AuthenticationException
      */
-    public function getToken($opts = [])
+    public function getToken(array $opts = []): Token
     {
         // For token endpoint, we need to use different headers
         if (!isset($opts['headers'])) {
@@ -39,7 +41,7 @@ class TokenService extends AbstractService
      * @return Token Token resource
      * @throws AuthenticationException
      */
-    public function create($opts = [])
+    public function create(array $opts = []): Token
     {
         return $this->getToken($opts);
     }

@@ -1,35 +1,45 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Tahsilat\Exception;
+
+use Exception;
+use Throwable;
 
 /**
  * Base exception class for Tahsilat SDK
  *
  * @package Tahsilat\Exception
  */
-class TahsilatException extends \Exception
+class TahsilatException extends Exception
 {
     /**
-     * @var int|null Error code from API
+     * @var int|string|null Error code from API
      */
     protected $errorCode;
 
     /**
      * @var array<string, mixed>|null Response data
      */
-    protected $responseData;
+    protected ?array $responseData;
 
     /**
      * Constructor
      *
      * @param string $message Error message
      * @param int $code HTTP status code
-     * @param int|null $errorCode API error code
+     * @param int|string|null $errorCode API error code
      * @param array<string, mixed>|null $responseData Response data
-     * @param \Throwable|null $previous Previous exception
+     * @param Throwable|null $previous Previous exception
      */
-    public function __construct($message = '', $code = 0, $errorCode = null, $responseData = null, $previous = null)
-    {
+    public function __construct(
+        string $message = '',
+        int $code = 0,
+        $errorCode = null,
+        ?array $responseData = null,
+        ?Throwable $previous = null
+    ) {
         parent::__construct($message, $code, $previous);
         $this->errorCode = $errorCode;
         $this->responseData = $responseData;
@@ -38,7 +48,7 @@ class TahsilatException extends \Exception
     /**
      * Get API error code
      *
-     * @return int|null API error code
+     * @return int|string|null API error code
      */
     public function getErrorCode()
     {
@@ -50,7 +60,7 @@ class TahsilatException extends \Exception
      *
      * @return array<string, mixed>|null Response data
      */
-    public function getResponseData()
+    public function getResponseData(): ?array
     {
         return $this->responseData;
     }

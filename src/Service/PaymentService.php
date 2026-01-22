@@ -1,9 +1,12 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Tahsilat\Service;
 
 use Tahsilat\Exception\AuthenticationException;
 use Tahsilat\Resource\Payment;
+use JsonException;
 
 /**
  * Service for payment operations
@@ -19,12 +22,13 @@ class PaymentService extends AbstractService
      * @param array<string, mixed> $opts Request options
      * @return Payment Payment resource
      * @throws AuthenticationException
+     * @throws JsonException
      */
-    public function create3ds($params = [], $opts = [])
+    public function create3ds(array $params = [], array $opts = []): Payment
     {
         // Convert products array to JSON if provided
         if (isset($params['products']) && is_array($params['products'])) {
-            $params['products'] = json_encode($params['products']);
+            $params['products'] = json_encode($params['products'], JSON_THROW_ON_ERROR);
         }
 
         // Convert metadata to indexed key-value array format
@@ -54,8 +58,9 @@ class PaymentService extends AbstractService
      * @param array<string, mixed> $opts Request options
      * @return Payment Payment resource
      * @throws AuthenticationException
+     * @throws JsonException
      */
-    public function create($params = [], $opts = [])
+    public function create(array $params = [], array $opts = []): Payment
     {
         return $this->create3ds($params, $opts);
     }

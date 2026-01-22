@@ -1,24 +1,47 @@
 <?php
 
-error_reporting(E_ALL & ~E_DEPRECATED & ~E_USER_DEPRECATED);
-
 /**
  * Tahsilat PHP SDK
  *
  * @package Tahsilat
+ * @version 2.0.0
+ * @requires PHP >= 7.4.0
  */
 
-// PHP version check
-if (version_compare(PHP_VERSION, '5.6.0', '<')) {
-    throw new Exception('Tahsilat PHP SDK requires PHP version 5.6 or higher.');
+// PHP version check - minimum 7.4.0 required
+if (PHP_VERSION_ID < 70400) {
+    trigger_error(
+        sprintf(
+            'Tahsilat PHP SDK requires PHP version 7.4.0 or higher. Current version: %s. ' .
+            'PHP versions below 7.4 are no longer supported.',
+            PHP_VERSION
+        ),
+        E_USER_ERROR
+    );
+
+    exit(1);
 }
 
 // Required extensions check
-$requiredExtensions = ['curl', 'json', 'mbstring'];
+$requiredExtensions = ['curl', 'json', 'mbstring', 'openssl'];
+$missingExtensions = [];
+
 foreach ($requiredExtensions as $ext) {
     if (!extension_loaded($ext)) {
-        throw new Exception("Tahsilat PHP SDK requires the {$ext} extension.");
+        $missingExtensions[] = $ext;
     }
+}
+
+if (!empty($missingExtensions)) {
+    trigger_error(
+        sprintf(
+            'Tahsilat PHP SDK requires the following PHP extensions: %s',
+            implode(', ', $missingExtensions)
+        ),
+        E_USER_ERROR
+    );
+
+    exit(1);
 }
 
 // Base classes
@@ -48,6 +71,7 @@ require_once __DIR__ . '/src/Resource/WebhookEvent.php';
 require_once __DIR__ . '/src/Resource/Commission.php';
 require_once __DIR__ . '/src/Resource/BinLookup.php';
 require_once __DIR__ . '/src/Resource/TransactionResult.php';
+require_once __DIR__ . '/src/Resource/ResolvePreAuth.php';
 
 // Services
 require_once __DIR__ . '/src/Service/AbstractService.php';
@@ -62,3 +86,4 @@ require_once __DIR__ . '/src/Service/BinLookupService.php';
 // Utilities
 require_once __DIR__ . '/src/Util/RequestOptions.php';
 require_once __DIR__ . '/src/Util/Webhook.php';
+require_once __DIR__ . '/src/Util/StatusConstants.php';

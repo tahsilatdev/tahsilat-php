@@ -1,9 +1,12 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Tahsilat;
 
 use Tahsilat\Exception\ApiErrorException;
 use Tahsilat\Exception\AuthenticationException;
+use Tahsilat\Service\AbstractService;
 use Tahsilat\Service\CommissionService;
 use Tahsilat\Service\CustomerService;
 use Tahsilat\Service\PaymentService;
@@ -15,13 +18,13 @@ use Tahsilat\Service\BinLookupService;
 /**
  * Client for interacting with the Tahsilat API
  *
- * @property TransactionService $transactions
- * @property CustomerService $customers
- * @property PaymentService $payments
- * @property ProductService $products
- * @property TokenService $tokens
- * @property CommissionService $commissions
- * @property BinLookupService $binLookup
+ * @property-read TransactionService $transactions
+ * @property-read CustomerService $customers
+ * @property-read PaymentService $payments
+ * @property-read ProductService $products
+ * @property-read TokenService $tokens
+ * @property-read CommissionService $commissions
+ * @property-read BinLookupService $binLookup
  *
  * @package Tahsilat
  */
@@ -30,30 +33,45 @@ class TahsilatClient
     /**
      * @var string The API key for authentication
      */
-    private $apiKey;
+    private string $apiKey;
 
     /**
      * @var string|null The access token
      */
-    private $accessToken;
+    private ?string $accessToken = null;
 
     /**
      * @var array<string, mixed> Client configuration options
      */
-    private $config;
+    private array $config;
 
     /**
-     * @var array<string, Service\AbstractService> Service instances
+     * @var array<string, AbstractService> Service instances
      */
-    private $services = [];
+    private array $services = [];
+
+    /**
+     * @var array<string, string> Service class mapping
+     */
+    private const SERVICE_MAP = [
+        'transactions' => TransactionService::class,
+        'customers' => CustomerService::class,
+        'payments' => PaymentService::class,
+        'products' => ProductService::class,
+        'tokens' => TokenService::class,
+        'commissions' => CommissionService::class,
+        'binLookup' => BinLookupService::class,
+    ];
 
     /**
      * Constructor
      *
-     * @param string $apiKey The API key for authentication (sk_test_*, pk_test_*, sk_live_*, pk_live_*)
+     * @param string $apiKey The API key for authentication (sk_test_*, sk_live_*)
      * @param array<string, mixed> $config Configuration options
+     * @throws AuthenticationException When API key is invalid
+     * @throws ApiErrorException When token fetch fails
      */
-    public function __construct($apiKey, $config = [])
+    public function __construct(string $apiKey, array $config = [])
     {
         $this->validateApiKey($apiKey);
         $this->apiKey = $apiKey;
@@ -63,7 +81,7 @@ class TahsilatClient
         $this->config = array_merge($this->getDefaultConfig(), $config);
         $this->applyConfig();
 
-        if (!isset($config['skip_token_fetch']) || !$config['skip_token_fetch']) {
+        if (!($config['skip_token_fetch'] ?? false)) {
             $this->fetchAccessToken();
         }
     }
@@ -75,16 +93,15 @@ class TahsilatClient
      * @return void
      * @throws AuthenticationException When API key is invalid
      */
-    private function validateApiKey($apiKey)
+    private function validateApiKey(string $apiKey): void
     {
         if (empty($apiKey)) {
             throw new AuthenticationException('API key is required');
         }
 
-        if (!is_string($apiKey)) {
-            throw new AuthenticationException('API key must be a string');
-        }
-
+        // Sanitize and validate the API key format
+        $apiKey = trim($apiKey);
+        
         if (!preg_match('/^sk_(live|test)_[a-zA-Z0-9]+$/', $apiKey)) {
             throw new AuthenticationException(
                 'Invalid API key format. API key must start with "sk_live_" or "sk_test_". ' .
@@ -98,7 +115,7 @@ class TahsilatClient
      *
      * @return array<string, mixed> Default configuration
      */
-    private function getDefaultConfig()
+    private function getDefaultConfig(): array
     {
         return [
             'api_version' => 'v1',
@@ -115,22 +132,22 @@ class TahsilatClient
      *
      * @return void
      */
-    private function applyConfig()
+    private function applyConfig(): void
     {
         if (isset($this->config['api_version'])) {
-            Tahsilat::setApiVersion($this->config['api_version']);
+            Tahsilat::setApiVersion((string) $this->config['api_version']);
         }
         if (isset($this->config['max_retries'])) {
-            Tahsilat::setMaxRetries($this->config['max_retries']);
+            Tahsilat::setMaxRetries((int) $this->config['max_retries']);
         }
         if (isset($this->config['connect_timeout'])) {
-            Tahsilat::setConnectTimeout($this->config['connect_timeout']);
+            Tahsilat::setConnectTimeout((int) $this->config['connect_timeout']);
         }
         if (isset($this->config['timeout'])) {
-            Tahsilat::setTimeout($this->config['timeout']);
+            Tahsilat::setTimeout((int) $this->config['timeout']);
         }
         if (isset($this->config['verify_ssl_certs'])) {
-            Tahsilat::setVerifySslCerts($this->config['verify_ssl_certs']);
+            Tahsilat::setVerifySslCerts((bool) $this->config['verify_ssl_certs']);
         }
         if (isset($this->config['ca_bundle_path'])) {
             Tahsilat::setCaBundlePath($this->config['ca_bundle_path']);
@@ -141,15 +158,16 @@ class TahsilatClient
      * Fetch access token using the API key
      *
      * @return void
-     * @throws ApiErrorException|Exception\AuthenticationException When token fetch fails
+     * @throws ApiErrorException When token fetch fails
+     * @throws AuthenticationException When authentication fails
      */
-    private function fetchAccessToken()
+    private function fetchAccessToken(): void
     {
         $tokenService = new TokenService($this);
         $token = $tokenService->getToken();
 
-        if ($token && isset($token->access_token)) {
-            $this->accessToken = $token->access_token;
+        if ($token !== null && isset($token->access_token) && !empty($token->access_token)) {
+            $this->accessToken = (string) $token->access_token;
             Tahsilat::setAccessToken($this->accessToken);
         } else {
             throw new ApiErrorException('Failed to fetch access token', 0, null, null);
@@ -160,17 +178,17 @@ class TahsilatClient
      * Magic getter for services
      *
      * @param string $name Service name
-     * @return Service\AbstractService
+     * @return AbstractService
      * @throws \InvalidArgumentException When service doesn't exist
      */
-    public function __get($name)
+    public function __get(string $name): AbstractService
     {
         if (isset($this->services[$name])) {
             return $this->services[$name];
         }
 
-        $serviceClass = $this->getServiceClass($name);
-        if ($serviceClass !== null) {
+        if (isset(self::SERVICE_MAP[$name])) {
+            $serviceClass = self::SERVICE_MAP[$name];
             $this->services[$name] = new $serviceClass($this);
             return $this->services[$name];
         }
@@ -179,32 +197,11 @@ class TahsilatClient
     }
 
     /**
-     * Get service class name from property name
-     *
-     * @param string $name Property name
-     * @return string|null Service class name
-     */
-    private function getServiceClass($name)
-    {
-        $services = [
-            'transactions' => 'Tahsilat\\Service\\TransactionService',
-            'customers' => 'Tahsilat\\Service\\CustomerService',
-            'payments' => 'Tahsilat\\Service\\PaymentService',
-            'products' => 'Tahsilat\\Service\\ProductService',
-            'tokens' => 'Tahsilat\\Service\\TokenService',
-            'commissions' => 'Tahsilat\\Service\\CommissionService',
-            'binLookup' => 'Tahsilat\\Service\\BinLookupService',
-        ];
-
-        return isset($services[$name]) ? $services[$name] : null;
-    }
-
-    /**
      * Get the API key
      *
      * @return string The API key
      */
-    public function getApiKey()
+    public function getApiKey(): string
     {
         return $this->apiKey;
     }
@@ -214,22 +211,19 @@ class TahsilatClient
      *
      * @param string $apiKey The API key
      * @return void
-     * @throws ApiErrorException
-     * @throws AuthenticationException
+     * @throws ApiErrorException When token fetch fails
+     * @throws AuthenticationException When authentication fails
      */
-    public function setApiKey($apiKey)
+    public function setApiKey(string $apiKey): void
     {
         $this->validateApiKey($apiKey);
         $this->apiKey = $apiKey;
         Tahsilat::setApiKey($apiKey);
 
-        try {
-            $this->fetchAccessToken();
-        } catch (ApiErrorException $e) {
-            throw $e;
-        } catch (Exception\AuthenticationException $e) {
-            throw $e;
-        }
+        // Clear cached services as they may use the old token
+        $this->services = [];
+        
+        $this->fetchAccessToken();
     }
 
     /**
@@ -237,7 +231,7 @@ class TahsilatClient
      *
      * @return string|null The access token
      */
-    public function getAccessToken()
+    public function getAccessToken(): ?string
     {
         return $this->accessToken;
     }
@@ -248,7 +242,7 @@ class TahsilatClient
      * @param string $accessToken The access token
      * @return void
      */
-    public function setAccessToken($accessToken)
+    public function setAccessToken(string $accessToken): void
     {
         $this->accessToken = $accessToken;
         Tahsilat::setAccessToken($accessToken);
@@ -261,9 +255,9 @@ class TahsilatClient
      * @param mixed $default Default value
      * @return mixed Configuration value
      */
-    public function getConfig($key, $default = null)
+    public function getConfig(string $key, $default = null)
     {
-        return isset($this->config[$key]) ? $this->config[$key] : $default;
+        return $this->config[$key] ?? $default;
     }
 
     /**
@@ -273,7 +267,7 @@ class TahsilatClient
      * @param mixed $value Configuration value
      * @return void
      */
-    public function setConfig($key, $value)
+    public function setConfig(string $key, $value): void
     {
         $this->config[$key] = $value;
         $this->applyConfig();
