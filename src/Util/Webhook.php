@@ -23,8 +23,8 @@ final class Webhook
      * Verify webhook signature and construct event
      *
      * @param string $payload Raw request body
-     * @param string $sigHeader Tahsilat-Signature header value
-     * @param string $endpointSecret Expected webhook signature/secret
+     * @param string $sigHeader X-Tahsilat-Signature header value (format: t=timestamp,v1=signature)
+     * @param string $endpointSecret Webhook signing secret
      * @param int $tolerance Maximum age of the event in seconds (default: 300)
      * @return WebhookEvent Verified webhook event
      * @throws SignatureVerificationException When signature verification fails
@@ -35,27 +35,48 @@ final class Webhook
         string $endpointSecret,
         int $tolerance = self::DEFAULT_TOLERANCE
     ): WebhookEvent {
-        // Validate inputs
         if (empty($endpointSecret)) {
             throw new SignatureVerificationException('Webhook endpoint secret is required');
         }
 
         if (empty($sigHeader)) {
-            throw new SignatureVerificationException('No Tahsilat-Signature header found');
+            throw new SignatureVerificationException('No X-Tahsilat-Signature header found');
         }
 
         if (empty($payload)) {
             throw new SignatureVerificationException('Webhook payload is empty');
         }
 
-        // Use timing-safe comparison to prevent timing attacks
-        if (!self::secureCompare($sigHeader, $endpointSecret)) {
+        $parsed = self::parseSignatureHeader($sigHeader);
+
+        if ($parsed['timestamp'] === null || $parsed['signature'] === null) {
+            throw new SignatureVerificationException(
+                'Unable to parse X-Tahsilat-Signature header. Expected format: t=timestamp,v1=signature'
+            );
+        }
+
+        // Timestamp tolerance check
+        $currentTime = time();
+        if (abs($currentTime - $parsed['timestamp']) > $tolerance) {
+            throw new SignatureVerificationException(
+                'Webhook timestamp is outside the tolerance zone. '
+                . 'Current time: ' . $currentTime . ', '
+                . 'Webhook time: ' . $parsed['timestamp'] . ', '
+                . 'Tolerance: ' . $tolerance . 's'
+            );
+        }
+
+        // Reconstruct expected signature: HMAC-SHA256(timestamp.payload, secret)
+        $signedPayload = $parsed['timestamp'] . '.' . $payload;
+        $expectedSignature = hash_hmac('sha256', $signedPayload, $endpointSecret);
+
+        if (!self::secureCompare($parsed['signature'], $expectedSignature)) {
             throw new SignatureVerificationException('Invalid webhook signature');
         }
 
         // Parse and validate JSON payload
         $data = json_decode($payload, true);
-        
+
         if (json_last_error() !== JSON_ERROR_NONE) {
             throw new SignatureVerificationException(
                 'Invalid JSON payload: ' . json_last_error_msg()
@@ -70,30 +91,7 @@ final class Webhook
     }
 
     /**
-     * Verify webhook signature using HMAC (for future HMAC-based signature verification)
-     *
-     * @param string $payload Raw request body
-     * @param string $sigHeader Signature header value
-     * @param string $secret Webhook secret
-     * @param string $algorithm Hash algorithm (default: sha256)
-     * @return bool Whether signature is valid
-     */
-    public static function verifyHmacSignature(
-        string $payload,
-        string $sigHeader,
-        string $secret,
-        string $algorithm = 'sha256'
-    ): bool {
-        $expectedSignature = hash_hmac($algorithm, $payload, $secret);
-        
-        return self::secureCompare($sigHeader, $expectedSignature);
-    }
-
-    /**
      * Timing-safe string comparison
-     *
-     * This function compares two strings in constant time to prevent
-     * timing attacks that could be used to guess the signature.
      *
      * @param string $a First string
      * @param string $b Second string
@@ -101,12 +99,11 @@ final class Webhook
      */
     private static function secureCompare(string $a, string $b): bool
     {
-        // hash_equals is available since PHP 5.6.0 and is timing-safe
         return hash_equals($a, $b);
     }
 
     /**
-     * Parse signature header with timestamp (for future timestamped signatures)
+     * Parse signature header with timestamp
      *
      * Expected format: t=timestamp,v1=signature
      *
@@ -121,10 +118,10 @@ final class Webhook
         ];
 
         $parts = explode(',', $header);
-        
+
         foreach ($parts as $part) {
             $keyValue = explode('=', $part, 2);
-            
+
             if (count($keyValue) !== 2) {
                 continue;
             }
