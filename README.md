@@ -242,6 +242,7 @@ try {
 
 ## Webhook Doğrulama
 
+Her webhook isteği `X-Tahsilat-Signature` başlığı ile HMAC-SHA256 imzası içerir. İmza formatı: `t=timestamp,v1=signature`.
 ```php
 use Tahsilat\Util\Webhook;
 
@@ -267,6 +268,11 @@ try {
     http_response_code(400);
     echo 'Geçersiz imza';
 }
+```
+
+Güvenlik bölümüne de ekle:
+```markdown
+- **HMAC-SHA256 webhook imzası** - Webhook istekleri timestamp ve payload ile imzalanır
 ```
 
 ## PHP Sürüm Uyumluluğu
