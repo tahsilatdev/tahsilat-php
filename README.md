@@ -242,7 +242,10 @@ try {
 
 ## Webhook Doğrulama
 
+> **Uyarı:** Webhook endpoint'iniz harici bir POST isteği aldığı için CSRF korumasından muaf tutulmalıdır. Laravel kullanıyorsanız webhook route'unu CSRF doğrulamasından hariç tutun, aksi takdirde 419 hatası alırsınız.
+
 Her webhook isteği `X-Tahsilat-Signature` başlığı ile HMAC-SHA256 imzası içerir. İmza formatı: `t=timestamp,v1=signature`.
+
 ```php
 use Tahsilat\Util\Webhook;
 
@@ -270,7 +273,6 @@ try {
 }
 ```
 
-Güvenlik bölümüne de ekle:
 ```markdown
 - **HMAC-SHA256 webhook imzası** - Webhook istekleri timestamp ve payload ile imzalanır
 ```
@@ -290,6 +292,7 @@ Bu SDK aşağıdaki güvenlik önlemlerini içerir:
 
 - **Minimum PHP 7.4 gereksinimi**
 - **SSL sertifika doğrulama** - Varsayılan olarak aktif
+- **HMAC-SHA256 webhook imzası** - Webhook istekleri timestamp ve payload ile imzalanır
 - **Timing-safe string comparison** - Webhook imza doğrulamasında timing attack koruması
 - **Header injection koruması** - HTTP header'larında CR/LF karakterleri temizlenir
 - **SSRF koruması** - HTTP redirect'ler devre dışı
