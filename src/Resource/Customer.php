@@ -21,10 +21,12 @@ namespace Tahsilat\Resource;
  * @property string|null $district Customer district
  * @property string|null $address Customer address
  * @property string|null $zip_code Customer zip code
+ * @property string|null $ip IP address the customer was created from
  * @property bool|null $created_via_payment Whether customer was created via payment
  * @property string|null $created_at Creation timestamp (ISO 8601)
  * @property string|null $updated_at Update timestamp (ISO 8601)
  * @property string|null $formatted_created_at Human-readable creation date
+ * @property string|null $formatted_updated_at Human-readable update date
  * @property array|null $metadata Customer metadata array
  * @property string|null $payment_link Payment link if available
  * @property array|null $timeline Customer activity timeline

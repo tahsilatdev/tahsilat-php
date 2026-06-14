@@ -7,7 +7,10 @@ namespace Tahsilat\Resource;
 /**
  * Commission resource
  *
+ * @property int $id Commission record ID
+ * @property int|null $company_pos_credential_id POS credential ID
  * @property int $merchant_id Merchant ID
+ * @property int|null $transaction_fee Per-transaction fee (in kuruş/cents)
  * @property int|null $card_family_id Card family ID
  * @property int|null $card_segment_type_id Card segment type ID
  * @property int|null $installment Installment count

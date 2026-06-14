@@ -15,6 +15,7 @@ namespace Tahsilat\Resource;
  * @property string|null $card_brand Card brand (visa, mastercard, etc.)
  * @property string|null $card_brand_image_url Card brand image URL
  * @property string|null $card_type Card type (credit, debit)
+ * @property string|null $card_family_logo_path Card family (loyalty program) logo URL
  *
  * @package Tahsilat\Resource
  */
