@@ -11,6 +11,7 @@ use Tahsilat\Util\StatusConstants;
  *
  * @property int $transaction_id Transaction ID
  * @property int $amount Transaction amount (in kuruş/cents)
+ * @property int $charged_amount Amount actually charged to the card (in kuruş/cents)
  * @property string $currency_code Currency code (TRY, USD, EUR)
  * @property int $installment_count Installment count
  * @property int $payment_status Payment status code
@@ -27,6 +28,7 @@ use Tahsilat\Util\StatusConstants;
  * @property string|null $end_at Transaction end time
  * @property array $metadata Transaction metadata
  * @property string $formatted_amount Human-readable amount (e.g., "200.00")
+ * @property string $formatted_charged_amount Human-readable charged amount (e.g., "200.00")
  *
  * @package Tahsilat\Resource
  */
@@ -240,6 +242,18 @@ class TransactionResult extends ApiResource
     public function getAmountDecimal(): float
     {
         return $this->amount / 100;
+    }
+
+    /**
+     * Get charged amount (amount billed to the card) in decimal format (e.g., 200.00)
+     *
+     * Falls back to the base amount when charged_amount is not present.
+     *
+     * @return float
+     */
+    public function getChargedAmountDecimal(): float
+    {
+        return ($this->charged_amount ?? $this->amount) / 100;
     }
 
     /**

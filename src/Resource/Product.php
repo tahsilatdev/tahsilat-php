@@ -11,10 +11,12 @@ namespace Tahsilat\Resource;
  * @property int $merchant_id Merchant ID
  * @property string $product_name Product name
  * @property int $price Product price (in kuruş/cents)
+ * @property int|null $currency_id Currency ID
  * @property string $currency_code Currency code (TRY, USD, EUR)
  * @property int $quantity Product quantity
  * @property string $description Product description
- * @property string|null $product_image Product image URL
+ * @property string|null $product_image Product image path
+ * @property string|null $product_image_url Full product image URL
  * @property string $created_at Creation timestamp (ISO 8601)
  * @property string $updated_at Update timestamp (ISO 8601)
  * @property string $formatted_price Human-readable price (e.g., "99,99")
