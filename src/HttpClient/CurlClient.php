@@ -312,7 +312,10 @@ class CurlClient implements HttpClientInterface
         // Use error_code as exception code if available, otherwise use HTTP status code
         $exceptionCode = $errorCode !== null ? (int) $errorCode : $httpCode;
 
-        throw new ApiErrorException($message, $exceptionCode, $errorCode, $data);
+        $exception = new ApiErrorException($message, $exceptionCode, $errorCode, $data);
+        $exception->setHttpStatus($httpCode);
+
+        throw $exception;
     }
 
     /**

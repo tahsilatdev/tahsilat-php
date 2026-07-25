@@ -25,6 +25,11 @@ class TahsilatException extends Exception
     protected ?array $responseData;
 
     /**
+     * @var int|null HTTP status code of the failed response
+     */
+    protected ?int $httpStatus = null;
+
+    /**
      * Constructor
      *
      * @param string $message Error message
@@ -63,5 +68,26 @@ class TahsilatException extends Exception
     public function getResponseData(): ?array
     {
         return $this->responseData;
+    }
+
+    /**
+     * Set the HTTP status code of the failed response
+     *
+     * @param int $httpStatus HTTP status code
+     * @return void
+     */
+    public function setHttpStatus(int $httpStatus): void
+    {
+        $this->httpStatus = $httpStatus;
+    }
+
+    /**
+     * Get the HTTP status code of the failed response
+     *
+     * @return int|null HTTP status code
+     */
+    public function getHttpStatus(): ?int
+    {
+        return $this->httpStatus;
     }
 }

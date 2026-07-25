@@ -41,6 +41,11 @@ class TahsilatClient
     private ?string $accessToken = null;
 
     /**
+     * @var int|null Unix timestamp the access token expires at
+     */
+    private ?int $accessTokenExpiresAt = null;
+
+    /**
      * @var array<string, mixed> Client configuration options
      */
     private array $config;
@@ -69,7 +74,6 @@ class TahsilatClient
      * @param string $apiKey The API key for authentication (sk_test_*, sk_live_*)
      * @param array<string, mixed> $config Configuration options
      * @throws AuthenticationException When API key is invalid
-     * @throws ApiErrorException When token fetch fails
      */
     public function __construct(string $apiKey, array $config = [])
     {
@@ -81,9 +85,11 @@ class TahsilatClient
         $this->config = array_merge($this->getDefaultConfig(), $config);
         $this->applyConfig();
 
-        if (!($config['skip_token_fetch'] ?? false)) {
-            $this->fetchAccessToken();
-        }
+        // The access token is fetched LAZILY on the first API call (see
+        // ensureAccessToken): constructing a client is free, no token is
+        // wasted per instantiation and the get-token rate limit is spared.
+        // The legacy skip_token_fetch option is therefore obsolete but still
+        // accepted for backwards compatibility.
     }
 
     /**
@@ -119,6 +125,7 @@ class TahsilatClient
     {
         return [
             'api_version' => 'v1',
+            'api_base' => null,
             'max_retries' => 3,
             'connect_timeout' => 30,
             'timeout' => 80,
@@ -163,15 +170,79 @@ class TahsilatClient
      */
     private function fetchAccessToken(): void
     {
-        $tokenService = new TokenService($this);
+        $tokenService = $this->createTokenService();
         $token = $tokenService->getToken();
 
         if ($token !== null && isset($token->access_token) && !empty($token->access_token)) {
             $this->accessToken = (string) $token->access_token;
+
+            $expiresAt = isset($token->expires_at) ? strtotime((string) $token->expires_at) : false;
+            // Fallback slightly under the API's 10-minute token TTL.
+            $this->accessTokenExpiresAt = $expiresAt !== false ? $expiresAt : time() + 540;
+
             Tahsilat::setAccessToken($this->accessToken);
         } else {
             throw new ApiErrorException('Failed to fetch access token', 0, null, null);
         }
+    }
+
+    /**
+     * Token-service factory; overridable so tests can inject a fake HTTP
+     * client into the minting path.
+     *
+     * @return TokenService
+     */
+    protected function createTokenService(): TokenService
+    {
+        return new TokenService($this);
+    }
+
+    /**
+     * Ensure a usable access token exists, minting one when missing or about
+     * to expire (60s safety margin). Called before every non-token request.
+     *
+     * @return void
+     * @throws ApiErrorException When token fetch fails
+     * @throws AuthenticationException When authentication fails
+     */
+    public function ensureAccessToken(): void
+    {
+        if (
+            $this->accessToken === null
+            || $this->accessTokenExpiresAt === null
+            || $this->accessTokenExpiresAt - 60 <= time()
+        ) {
+            $this->fetchAccessToken();
+        }
+    }
+
+    /**
+     * Force-mint a fresh access token (used after a 401 on an API call).
+     *
+     * @return void
+     * @throws ApiErrorException When token fetch fails
+     * @throws AuthenticationException When authentication fails
+     */
+    public function refreshAccessToken(): void
+    {
+        $this->fetchAccessToken();
+    }
+
+    /**
+     * API base URL for THIS client's key (instance-safe: does not depend on
+     * the global static key, so two clients can coexist in one process).
+     *
+     * @return string The API base URL
+     */
+    public function getApiBase(): string
+    {
+        $override = $this->config['api_base'] ?? null;
+
+        if (is_string($override) && $override !== '') {
+            return rtrim($override, '/') . '/';
+        }
+
+        return Tahsilat::apiBaseForKey($this->apiKey);
     }
 
     /**
@@ -211,8 +282,7 @@ class TahsilatClient
      *
      * @param string $apiKey The API key
      * @return void
-     * @throws ApiErrorException When token fetch fails
-     * @throws AuthenticationException When authentication fails
+     * @throws AuthenticationException When the API key is invalid
      */
     public function setApiKey(string $apiKey): void
     {
@@ -220,10 +290,11 @@ class TahsilatClient
         $this->apiKey = $apiKey;
         Tahsilat::setApiKey($apiKey);
 
-        // Clear cached services as they may use the old token
+        // Clear cached services and token state; a fresh token is minted
+        // lazily on the next request.
         $this->services = [];
-        
-        $this->fetchAccessToken();
+        $this->accessToken = null;
+        $this->accessTokenExpiresAt = null;
     }
 
     /**
@@ -245,6 +316,9 @@ class TahsilatClient
     public function setAccessToken(string $accessToken): void
     {
         $this->accessToken = $accessToken;
+        // Manually supplied tokens carry no expiry info; assume just under
+        // the API's 10-minute TTL so ensureAccessToken() won't clobber it.
+        $this->accessTokenExpiresAt = time() + 540;
         Tahsilat::setAccessToken($accessToken);
     }
 

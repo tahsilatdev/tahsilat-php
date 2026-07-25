@@ -12,6 +12,17 @@ Tahsilat Payment Gateway için resmi PHP SDK.
 - mbstring extension
 - OpenSSL extension
 
+## Önemli Notlar
+
+- **Canlı ortamda IP izin listesi:** Canlı (live) API çağrıları yalnızca
+  panelden tanımladığınız sunucu IP adreslerinden kabul edilir. Entegrasyon
+  canlıya alınmadan önce sunucunuzun çıkış IP'sini Tahsilat panelinden
+  eklediğinizden emin olun — aksi halde tüm istekler 401 döner.
+- **Access token yönetimi otomatiktir:** SDK, access token'ı ilk API
+  çağrısında alır, süresi dolmadan (60 sn marj) otomatik yeniler ve 401
+  durumunda bir kez tazeleyip isteği tekrarlar. Elle token yönetimi
+  gerekmez.
+
 ## Kurulum
 
 ### Composer ile kurulum (Önerilen):
@@ -140,7 +151,7 @@ $refund = $tahsilat->transactions->refund([
 ### BIN Sorgulama
 ```php
 $bin = $tahsilat->binLookup->detail([
-    'bin_number' => '489455'
+    'bin_number' => '48945550'
 ]);
 
 echo $bin->bank_name;
@@ -151,6 +162,10 @@ echo $bin->card_brand;   // visa, mastercard
 ### Komisyon Sorgulama
 ```php
 $commissions = $tahsilat->commissions->search();
+
+foreach ($commissions as $commission) {
+    echo $commission->installment_text . ': %' . $commission->commission_rate . PHP_EOL;
+}
 ```
 
 ## Response Kullanımı
@@ -251,7 +266,7 @@ use Tahsilat\Util\Webhook;
 
 $payload = file_get_contents('php://input');
 $signature = $_SERVER['HTTP_X_TAHSILAT_SIGNATURE'] ?? '';
-$webhookSecret = 'whsec_your_webhook_secret';
+$webhookSecret = 'whkey_your_webhook_secret';
 
 try {
     $event = Webhook::constructEvent($payload, $signature, $webhookSecret);

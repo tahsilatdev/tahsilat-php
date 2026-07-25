@@ -21,7 +21,7 @@ class Tahsilat
     /**
      * @var string Minimum required PHP version
      */
-    public const MIN_PHP_VERSION = '7.2.0';
+    public const MIN_PHP_VERSION = '7.4.0';
 
     /**
      * @var string The Tahsilat API base URL for live environment
@@ -244,22 +244,30 @@ class Tahsilat
     /**
      * Gets the API base URL based on the API key
      *
-     * If an API key contains 'test', returns sandbox URL
-     * Otherwise returns live URL
-     *
      * @return string The API base URL
      */
     public static function getApiBase(): string
     {
-        $apiKey = self::getApiKey();
+        return self::apiBaseForKey(self::getApiKey());
+    }
 
-        // If no API key is set, default to live (this will likely cause an auth error later)
+    /**
+     * Resolves the API base URL for a given API key
+     *
+     * Only the key PREFIX decides the environment: sk_test_/pk_test_ keys go
+     * to sandbox, everything else to live. A substring check would misroute a
+     * live key whose random body happens to contain "test".
+     *
+     * @param string|null $apiKey The API key
+     * @return string The API base URL
+     */
+    public static function apiBaseForKey(?string $apiKey): string
+    {
         if ($apiKey === null) {
             return self::API_LIVE_BASE;
         }
 
-        // Check if the API key contains 'test' to determine the environment
-        if (strpos($apiKey, 'test') !== false) {
+        if (strpos($apiKey, 'sk_test_') === 0 || strpos($apiKey, 'pk_test_') === 0) {
             return self::API_SANDBOX_BASE;
         }
 

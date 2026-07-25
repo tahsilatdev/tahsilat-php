@@ -4,10 +4,9 @@ declare(strict_types=1);
 
 namespace Tahsilat\Service;
 
-use Tahsilat\Exception\AuthenticationException;
+use Tahsilat\Exception\ApiErrorException;
 use Tahsilat\HttpClient\CurlClient;
 use Tahsilat\HttpClient\HttpClientInterface;
-use Tahsilat\Tahsilat;
 use Tahsilat\TahsilatClient;
 
 /**
@@ -31,11 +30,12 @@ abstract class AbstractService
      * Constructor
      *
      * @param TahsilatClient $client The client instance
+     * @param HttpClientInterface|null $httpClient Custom HTTP client (tests)
      */
-    public function __construct(TahsilatClient $client)
+    public function __construct(TahsilatClient $client, ?HttpClientInterface $httpClient = null)
     {
         $this->client = $client;
-        $this->httpClient = new CurlClient();
+        $this->httpClient = $httpClient ?? new CurlClient();
     }
 
     /**
@@ -46,19 +46,16 @@ abstract class AbstractService
      * @param array<string, mixed> $params Request parameters
      * @param array<string, mixed> $opts Request options
      * @return array<string, mixed> Response data
-     * @throws AuthenticationException When API key is missing
+     * @throws ApiErrorException When the API returns an error
      */
     protected function request(string $method, string $path, array $params = [], array $opts = []): array
     {
-        // Check API key
-        if (Tahsilat::getApiKey() === null) {
-            throw new AuthenticationException(
-                'API key is required. Set it using Tahsilat::setApiKey() or instantiate TahsilatClient with an API key.'
-            );
-        }
+        $isTokenPath = strpos($path, 'token/get-token') !== false;
 
-        // Build URL
-        $url = Tahsilat::getApiBase() . ltrim($path, '/');
+        // Instance-scoped base URL and Authorization: two clients (e.g. live
+        // and sandbox) can coexist in one process without clobbering each
+        // other through the global statics.
+        $url = $this->client->getApiBase() . ltrim($path, '/');
 
         // Prepare headers
         $headers = [];
@@ -72,12 +69,34 @@ abstract class AbstractService
             $headers['Content-Type'] = 'application/x-www-form-urlencoded';
         }
 
-        // Make request
-        $response = $this->httpClient->request($method, $url, $headers, $params);
+        if ($isTokenPath) {
+            $headers['Authorization'] = 'Bearer ' . $this->client->getApiKey();
+        } else {
+            // Lazily mint (or refresh a nearly-expired) access token.
+            $this->client->ensureAccessToken();
+            $headers['Authorization'] = 'Bearer ' . $this->client->getAccessToken();
+        }
 
-        // Handle successful response
-        if (isset($response['data'])) {
-            return $response['data'];
+        try {
+            $response = $this->httpClient->request($method, $url, $headers, $params);
+        } catch (ApiErrorException $exception) {
+            if ($isTokenPath || $exception->getHttpStatus() !== 401) {
+                throw $exception;
+            }
+
+            // The token was revoked/expired server-side: mint a fresh one and
+            // retry exactly once, then let any failure surface.
+            $this->client->refreshAccessToken();
+            $headers['Authorization'] = 'Bearer ' . $this->client->getAccessToken();
+
+            $response = $this->httpClient->request($method, $url, $headers, $params);
+        }
+
+        // Unwrap the {status, message, errors, error_code, data} envelope.
+        // array_key_exists: a success with "data": null must yield an empty
+        // resource, not a resource built from the envelope itself.
+        if (array_key_exists('data', $response)) {
+            return is_array($response['data']) ? $response['data'] : [];
         }
 
         return $response;

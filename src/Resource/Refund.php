@@ -9,7 +9,6 @@ namespace Tahsilat\Resource;
  *
  * @property int|null $id Refund record ID
  * @property int|null $transaction_id Transaction ID
- * @property int|null $amount Requested refund amount (in kuruş/cents)
  * @property int|null $payment_transaction_id Payment transaction ID
  * @property int|null $merchant_id Merchant ID
  * @property int|null $company_pos_credential_id POS credential ID
