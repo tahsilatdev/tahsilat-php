@@ -164,8 +164,9 @@ echo $bin->card_brand;   // visa, mastercard
 $commissions = $tahsilat->commissions->search();
 
 foreach ($commissions as $commission) {
-    // Her satır, hangi kart senaryosuna ait olduğunu taşır:
-    // installment + card_type + is_on_us + is_foreign
+    // Her satır hangi POS'a ve hangi kart senaryosuna ait olduğunu taşır:
+    // pos_name + installment + card_type + is_on_us + is_foreign
+    echo $commission->getBankName() . ' — ';
     echo $commission->installment_text . ': %' . $commission->commission_rate;
     echo ' (' . ($commission->card_type ?? 'tüm kartlar');
     echo $commission->isForeign() ? ', yabancı' : ', yerli';

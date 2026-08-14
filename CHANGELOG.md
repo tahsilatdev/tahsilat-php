@@ -6,6 +6,10 @@ All notable changes to this project will be documented in this file.
 
 ### Added
 - `Commission` resource now exposes the card-scope dimensions that make each rate row unambiguous under POS Switch: `card_type`, `is_on_us`, `is_foreign`, plus an `isForeign()` helper. Duplicate rate values can be told apart by `installment` + these fields.
+- Commission listing now covers **all** of the merchant's active POSes (not just the primary one). Each row carries `company_pos_credential_id`, `pos_id` and `pos_name`, so rates stay attributable per POS. `getBankName()` now resolves from `pos_name`.
+
+### Changed
+- `commissions->search()` without a BIN previously returned only the primary POS's rates; it now returns every active POS's rates. Existing fields are unchanged (additive).
 
 ## [2.0.0] - 2026-01-XX
 

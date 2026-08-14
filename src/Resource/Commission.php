@@ -8,6 +8,9 @@ namespace Tahsilat\Resource;
  * Commission resource
  *
  * @property int $merchant_id Merchant ID
+ * @property int|null $company_pos_credential_id POS credential ID this rate belongs to
+ * @property int|null $pos_id POS integration ID this rate belongs to
+ * @property string|null $pos_name POS name this rate belongs to (e.g. "Ziraat Pay Pos")
  * @property int|null $transaction_fee Per-transaction fee (in kuruş/cents)
  * @property int|null $card_family_id Card family ID
  * @property int|null $card_segment_type_id Card segment type ID
@@ -72,7 +75,8 @@ class Commission extends ApiResource
      */
     public function getBankName(): ?string
     {
-        return $this->company_pos_credential['pos_integration']['integration_name'] ?? null;
+        return $this->pos_name
+            ?? ($this->company_pos_credential['pos_integration']['integration_name'] ?? null);
     }
 
     /**
