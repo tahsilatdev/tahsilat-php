@@ -11,6 +11,9 @@ namespace Tahsilat\Resource;
  * @property int|null $transaction_fee Per-transaction fee (in kuruş/cents)
  * @property int|null $card_family_id Card family ID
  * @property int|null $card_segment_type_id Card segment type ID
+ * @property string|null $card_type Card type the rate applies to ("credit"/"debit"/"prepaid"; null = any type)
+ * @property bool|null $is_on_us On-us row (card issuer's own POS); true = on-us, false = not-on-us, null = both
+ * @property bool $is_foreign Whether the rate applies to foreign (non-domestic) cards
  * @property int|null $installment Installment count
  * @property string|null $installment_text Human-readable installment text (e.g. "Tek çekim", "2 Taksit")
  * @property float|null $commission_rate Commission rate percentage
@@ -50,6 +53,16 @@ class Commission extends ApiResource
     public function isPaidByCustomer(): bool
     {
         return ($this->commission_by ?? null) === self::COMMISSION_BY_CUSTOMER;
+    }
+
+    /**
+     * Whether the rate applies to foreign (non-domestic) cards
+     *
+     * @return bool
+     */
+    public function isForeign(): bool
+    {
+        return (bool) ($this->is_foreign ?? false);
     }
 
     /**

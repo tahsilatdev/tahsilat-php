@@ -2,6 +2,11 @@
 
 All notable changes to this project will be documented in this file.
 
+## [Unreleased]
+
+### Added
+- `Commission` resource now exposes the card-scope dimensions that make each rate row unambiguous under POS Switch: `card_type`, `is_on_us`, `is_foreign`, plus an `isForeign()` helper. Duplicate rate values can be told apart by `installment` + these fields.
+
 ## [2.0.0] - 2026-01-XX
 
 ### Breaking Changes
