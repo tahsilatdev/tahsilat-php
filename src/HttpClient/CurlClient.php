@@ -160,7 +160,7 @@ class CurlClient implements HttpClientInterface
                 $errno = curl_errno($this->curlHandle);
                 $error = curl_error($this->curlHandle);
 
-                if ($retries < $maxRetries && $this->shouldRetry($errno)) {
+                if ($retries < $maxRetries && $this->shouldRetry($errno, $upperMethod)) {
                     $retries++;
                     // Exponential backoff with jitter (max 2 seconds)
                     $sleepTime = min($retries * 500000 + random_int(0, 100000), 2000000);
@@ -264,18 +264,30 @@ class CurlClient implements HttpClientInterface
      * Determine if request should be retried
      *
      * @param int $errno cURL error number
+     * @param string $method Uppercased HTTP method of the request
      * @return bool Whether to retry
      */
-    private function shouldRetry(int $errno): bool
+    private function shouldRetry(int $errno, string $method): bool
     {
-        $retriableErrors = [
+        $connectionErrors = [
             CURLE_COULDNT_CONNECT,
             CURLE_COULDNT_RESOLVE_HOST,
-            CURLE_OPERATION_TIMEOUTED,
             CURLE_SSL_CONNECT_ERROR,
         ];
 
-        return in_array($errno, $retriableErrors, true);
+        // Connection-establishment failures never reached the server, so any method is safe to retry.
+        if (in_array($errno, $connectionErrors, true)) {
+            return true;
+        }
+
+        // A timed-out request may have been processed server-side; retrying a mutating
+        // call could duplicate its side effect (e.g. a second partial refund), so
+        // timeouts are only retried for read requests and token creation.
+        if ($errno === CURLE_OPERATION_TIMEOUTED) {
+            return $method === 'GET' || $this->isTokenRequest;
+        }
+
+        return false;
     }
 
     /**
