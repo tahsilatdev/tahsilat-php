@@ -5,6 +5,9 @@ All notable changes to this project will be documented in this file.
 ## [Unreleased]
 
 ### Added
+- Subscription (recurring payment) support, matching the API docs: `products->create()` accepts `is_recurring`, `billing_interval`, `interval_count`; `payments->create()` accepts `subscription_credential_id`. `Product` gains `isRecurring()` / `getRecurringText()`.
+- `TransactionResult` and `WebhookEvent` expose the new `subscription` block via `hasSubscription()`, `getSubscription()`, `getSubscriptionId()`, `getSubscriptionCycleNumber()`, `isInitialSubscriptionPayment()` and `getSubscriptionStatusTextTr()`.
+- `StatusConstants::SUBSCRIPTION_STATUS_*` and `StatusConstants::BILLING_INTERVAL_*` constants.
 - `Commission` resource now exposes the card-scope dimensions that make each rate row unambiguous under POS Switch: `card_type`, `is_on_us`, `is_foreign`, plus an `isForeign()` helper. Duplicate rate values can be told apart by `installment` + these fields.
 - Commission listing now covers **all** of the merchant's active POSes (not just the primary one). Each row carries `company_pos_credential_id`, `pos_id` and `pos_name`, so rates stay attributable per POS. `getBankName()` now resolves from `pos_name`.
 

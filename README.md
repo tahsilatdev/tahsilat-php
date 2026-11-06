@@ -120,6 +120,50 @@ $payment = $tahsilat->payments->create([
 ]);
 ```
 
+### Abonelik (Tekrarlayan Ödeme)
+
+Abonelik, ürün üzerinde tanımlanır; ayrı bir endpoint yoktur. Önce abonelik ürünü oluşturun, sonra bu ürünle normal bir ödeme başlatın. Müşteri ilk ödemeyi 3D Secure ile tamamladığında abonelik otomatik oluşur.
+
+```php
+use Tahsilat\Util\StatusConstants;
+
+// 1. Abonelik ürünü
+$product = $tahsilat->products->create([
+    'product_name' => 'Premium Üyelik',
+    'price' => 49900,
+    'is_recurring' => true,
+    'billing_interval' => StatusConstants::BILLING_INTERVAL_MONTH, // 1 gün, 2 hafta, 3 ay, 4 yıl
+    'interval_count' => 1,
+]);
+
+echo $product->getRecurringText(); // "Aylık"
+
+// 2. İlk ödeme
+$payment = $tahsilat->payments->create([
+    'amount' => 49900,
+    'currency' => 'TRY',
+    'customer_id' => 50012535976895,
+    'product_ids' => [$product->id],
+    // Birden fazla abonelik destekli POS'unuz varsa zorunlu:
+    // 'subscription_credential_id' => 123,
+]);
+```
+
+Sonraki dönem tahsilatları yeni bir `transaction_id` ile ayrı işlem olarak gelir; işlem sonucu ve webhook yükündeki `subscription` bloğu abonelik kimliğini ve dönem numarasını taşır (abonelik dışı işlemlerde `null`).
+
+```php
+$transaction = $tahsilat->transactions->retrieve(75690998341504);
+
+if ($transaction->hasSubscription()) {
+    $subscriptionId = $transaction->getSubscriptionId();
+    $cycleNumber = $transaction->getSubscriptionCycleNumber();   // 0 = ilk 3D ödeme
+    $isFirst = $transaction->isInitialSubscriptionPayment();
+    $statusText = $transaction->getSubscriptionStatusTextTr();  // "Aktif", "Ödeme Bekliyor", ...
+}
+```
+
+Abonelik özelliği sınırlı erişimdedir; hesabınızda etkin değilse istekler `4002` ya da `4007` hata koduyla reddedilir.
+
 ### İşlem Sorgulama
 ```php
 $transaction = $tahsilat->transactions->retrieve(78810412652494);
@@ -286,6 +330,12 @@ try {
     
     if ($event->isFail()) {
         // Ödeme başarısız işlemleri
+    }
+
+    if ($event->hasSubscription()) {
+        // Abonelik tahsilatı: subscription_id ile aboneliği, cycle_number ile dönemi eşleştirin
+        $subscriptionId = $event->getSubscriptionId();
+        $cycleNumber = $event->getSubscriptionCycleNumber();
     }
     
     http_response_code(200);

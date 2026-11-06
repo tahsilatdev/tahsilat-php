@@ -23,6 +23,10 @@ namespace Tahsilat\Resource;
  * @property string $formatted_created_at Human-readable creation date
  * @property int $system_id System ID
  * @property array $metadata Product metadata array
+ * @property bool $is_recurring Whether the product is a subscription (recurring) product
+ * @property int|null $billing_interval Billing interval unit (1 day, 2 week, 3 month, 4 year)
+ * @property int|null $interval_count Interval multiplier (1-366)
+ * @property string|null $recurring_text Human-readable billing interval (e.g., "Aylık", "2 ayda bir")
  * @property string|null $payment_link Payment link if available
  * @property array $timeline Product activity timeline
  *
@@ -91,5 +95,25 @@ class Product extends ApiResource
     public function getTimeline(): array
     {
         return $this->timeline ?? [];
+    }
+
+    /**
+     * Check if the product is a subscription (recurring) product
+     *
+     * @return bool
+     */
+    public function isRecurring(): bool
+    {
+        return (bool) $this->get('is_recurring', false);
+    }
+
+    /**
+     * Get the human-readable billing interval (e.g., "Aylık", "2 ayda bir")
+     *
+     * @return string|null
+     */
+    public function getRecurringText(): ?string
+    {
+        return $this->get('recurring_text');
     }
 }

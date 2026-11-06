@@ -29,6 +29,7 @@ use Tahsilat\Util\StatusConstants;
  * @property array $metadata Transaction metadata
  * @property string $formatted_amount Human-readable amount (e.g., "200.00")
  * @property string $formatted_charged_amount Human-readable charged amount (e.g., "200.00")
+ * @property array|null $subscription Subscription block (subscription_id, status, cycle_number, next_billing_at, cancelled_at, status_text, is_initial_payment); null for non-subscription payments
  *
  * @package Tahsilat\Resource
  */
@@ -346,5 +347,87 @@ class TransactionResult extends ApiResource
         ];
 
         return $statusMap[$this->transaction_status] ?? 'Bilinmiyor';
+    }
+
+    /**
+     * Check if the transaction belongs to a subscription
+     *
+     * @return bool
+     */
+    public function hasSubscription(): bool
+    {
+        return $this->getSubscription() !== null;
+    }
+
+    /**
+     * Get the subscription block (subscription_id, status, cycle_number, next_billing_at, cancelled_at, status_text, is_initial_payment)
+     *
+     * @return array<string, mixed>|null Null when the transaction is not a subscription payment
+     */
+    public function getSubscription(): ?array
+    {
+        $subscription = $this->get('subscription');
+
+        return is_array($subscription) ? $subscription : null;
+    }
+
+    /**
+     * Get the subscription ID
+     *
+     * @return int|null
+     */
+    public function getSubscriptionId(): ?int
+    {
+        $subscription = $this->getSubscription();
+
+        return isset($subscription['subscription_id']) ? (int) $subscription['subscription_id'] : null;
+    }
+
+    /**
+     * Get the billing cycle number (0 = initial 3D Secure payment)
+     *
+     * @return int|null
+     */
+    public function getSubscriptionCycleNumber(): ?int
+    {
+        $subscription = $this->getSubscription();
+
+        return isset($subscription['cycle_number']) ? (int) $subscription['cycle_number'] : null;
+    }
+
+    /**
+     * Check if this is the initial (3D Secure) payment of a subscription
+     *
+     * @return bool
+     */
+    public function isInitialSubscriptionPayment(): bool
+    {
+        $subscription = $this->getSubscription();
+
+        return $subscription !== null && (bool) ($subscription['is_initial_payment'] ?? false);
+    }
+
+    /**
+     * Get subscription status text in Turkish
+     *
+     * @return string|null Null when the transaction is not a subscription payment
+     */
+    public function getSubscriptionStatusTextTr(): ?string
+    {
+        $subscription = $this->getSubscription();
+
+        if ($subscription === null) {
+            return null;
+        }
+
+        $statusMap = [
+            StatusConstants::SUBSCRIPTION_STATUS_ACTIVE => 'Aktif',
+            StatusConstants::SUBSCRIPTION_STATUS_PAST_DUE => 'Ödeme Bekliyor',
+            StatusConstants::SUBSCRIPTION_STATUS_CANCELLED => 'İptal Edildi',
+            StatusConstants::SUBSCRIPTION_STATUS_COMPLETED => 'Tamamlandı',
+            StatusConstants::SUBSCRIPTION_STATUS_PENDING => 'İlk Ödeme Bekleniyor',
+        ];
+
+        return $statusMap[$subscription['status'] ?? null] ?? 'Bilinmiyor';
     }
 }

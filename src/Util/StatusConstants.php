@@ -38,6 +38,17 @@ final class StatusConstants
     public const PAYMENT_METHOD_3D = 1;
     public const PAYMENT_METHOD_2D = 2;
 
+    public const SUBSCRIPTION_STATUS_ACTIVE = 1;
+    public const SUBSCRIPTION_STATUS_PAST_DUE = 2;
+    public const SUBSCRIPTION_STATUS_CANCELLED = 3;
+    public const SUBSCRIPTION_STATUS_COMPLETED = 4;
+    public const SUBSCRIPTION_STATUS_PENDING = 5;
+
+    public const BILLING_INTERVAL_DAY = 1;
+    public const BILLING_INTERVAL_WEEK = 2;
+    public const BILLING_INTERVAL_MONTH = 3;
+    public const BILLING_INTERVAL_YEAR = 4;
+
     /**
      * Prevent instantiation
      */
