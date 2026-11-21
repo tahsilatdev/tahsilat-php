@@ -164,6 +164,19 @@ if ($transaction->hasSubscription()) {
 
 Abonelik özelliği sınırlı erişimdedir; hesabınızda etkin değilse istekler `4002` ya da `4007` hata koduyla reddedilir.
 
+İşlem sonucundaki `customer` bloğu işlemin müşterisini ve müşteriye tanımlı metadata'yı taşır (müşteri yoksa ya da silindiyse `null`):
+
+```php
+$transaction = $tahsilat->transactions->retrieve(75690998341504);
+
+if ($transaction->hasCustomer()) {
+    $customerId = $transaction->getCustomerId();
+    $email = $transaction->getCustomer()['email'];
+    $accountCode = $transaction->getCustomerMetadataValue('cari_kodu');
+    $customerMetadata = $transaction->getCustomerMetadataAsKeyValue();
+}
+```
+
 ### İşlem Sorgulama
 ```php
 $transaction = $tahsilat->transactions->retrieve(78810412652494);
