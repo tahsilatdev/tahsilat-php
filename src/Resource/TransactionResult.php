@@ -29,6 +29,7 @@ use Tahsilat\Util\StatusConstants;
  * @property array $metadata Transaction metadata
  * @property string $formatted_amount Human-readable amount (e.g., "200.00")
  * @property string $formatted_charged_amount Human-readable charged amount (e.g., "200.00")
+ * @property array|null $customer Customer block (customer_id, name, lastname, email, phone_code, phone, country, city, district, address, zip_code, metadata); null when the transaction has no customer or the customer was deleted
  * @property array|null $subscription Subscription block (subscription_id, status, cycle_number, next_billing_at, cancelled_at, status_text, is_initial_payment); null for non-subscription payments
  *
  * @package Tahsilat\Resource
@@ -429,5 +430,76 @@ class TransactionResult extends ApiResource
         ];
 
         return $statusMap[$subscription['status'] ?? null] ?? 'Bilinmiyor';
+    }
+
+    /**
+     * Check if the transaction carries a customer
+     *
+     * @return bool
+     */
+    public function hasCustomer(): bool
+    {
+        return $this->getCustomer() !== null;
+    }
+
+    /**
+     * Get the customer block (customer_id, name, lastname, email, phone_code, phone, country, city, district, address, zip_code, metadata)
+     *
+     * @return array<string, mixed>|null Null when the transaction has no customer or the customer was deleted
+     */
+    public function getCustomer(): ?array
+    {
+        $customer = $this->get('customer');
+
+        return is_array($customer) ? $customer : null;
+    }
+
+    /**
+     * Get the customer ID
+     *
+     * @return int|null
+     */
+    public function getCustomerId(): ?int
+    {
+        $customer = $this->getCustomer();
+
+        return isset($customer['customer_id']) ? (int) $customer['customer_id'] : null;
+    }
+
+    /**
+     * Get a customer metadata value by key
+     *
+     * @param string $key Metadata key
+     * @param mixed $default Default value if key not found
+     * @return mixed
+     */
+    public function getCustomerMetadataValue(string $key, $default = null)
+    {
+        $metadata = $this->getCustomerMetadataAsKeyValue();
+
+        return array_key_exists($key, $metadata) ? $metadata[$key] : $default;
+    }
+
+    /**
+     * Get all customer metadata as key-value pairs
+     *
+     * @return array<string, string|null>
+     */
+    public function getCustomerMetadataAsKeyValue(): array
+    {
+        $customer = $this->getCustomer();
+
+        if (!isset($customer['metadata']) || !is_array($customer['metadata'])) {
+            return [];
+        }
+
+        $result = [];
+        foreach ($customer['metadata'] as $item) {
+            if (isset($item['key'])) {
+                $result[$item['key']] = $item['value'] ?? null;
+            }
+        }
+
+        return $result;
     }
 }
