@@ -5,6 +5,7 @@ All notable changes to this project will be documented in this file.
 ## [Unreleased]
 
 ### Added
+- Subscription cancellation: `subscriptions->cancel($subscriptionId)` calls `POST subscriptions/{id}/cancel` and returns a `SubscriptionCancellation` (`subscription_id`, `status`, `status_text`, `cancelled_at`, `isCancelled()`). The call is idempotent: an already cancelled subscription answers with the date of the first cancellation. Requires a secret key.
 - Subscription (recurring payment) support, matching the API docs: `products->create()` accepts `is_recurring`, `billing_interval`, `interval_count`; `payments->create()` accepts `subscription_credential_id`. `Product` gains `isRecurring()` / `getRecurringText()`.
 - `TransactionResult` and `WebhookEvent` expose the new `subscription` block via `hasSubscription()`, `getSubscription()`, `getSubscriptionId()`, `getSubscriptionCycleNumber()`, `isInitialSubscriptionPayment()` and `getSubscriptionStatusTextTr()`.
 - `StatusConstants::SUBSCRIPTION_STATUS_*` and `StatusConstants::BILLING_INTERVAL_*` constants.
