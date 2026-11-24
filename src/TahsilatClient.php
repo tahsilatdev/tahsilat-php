@@ -11,6 +11,7 @@ use Tahsilat\Service\CommissionService;
 use Tahsilat\Service\CustomerService;
 use Tahsilat\Service\PaymentService;
 use Tahsilat\Service\ProductService;
+use Tahsilat\Service\SubscriptionService;
 use Tahsilat\Service\TokenService;
 use Tahsilat\Service\TransactionService;
 use Tahsilat\Service\BinLookupService;
@@ -22,6 +23,7 @@ use Tahsilat\Service\BinLookupService;
  * @property-read CustomerService $customers
  * @property-read PaymentService $payments
  * @property-read ProductService $products
+ * @property-read SubscriptionService $subscriptions
  * @property-read TokenService $tokens
  * @property-read CommissionService $commissions
  * @property-read BinLookupService $binLookup
@@ -63,6 +65,7 @@ class TahsilatClient
         'customers' => CustomerService::class,
         'payments' => PaymentService::class,
         'products' => ProductService::class,
+        'subscriptions' => SubscriptionService::class,
         'tokens' => TokenService::class,
         'commissions' => CommissionService::class,
         'binLookup' => BinLookupService::class,

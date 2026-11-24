@@ -164,6 +164,29 @@ if ($transaction->hasSubscription()) {
 
 Abonelik özelliği sınırlı erişimdedir; hesabınızda etkin değilse istekler `4002` ya da `4007` hata koduyla reddedilir.
 
+#### Abonelik İptali
+
+Aboneliği `subscriptions->cancel()` ile iptal edersiniz. Abonelik kimliği, işlem sonucundaki ya da webhook'taki `subscription.subscription_id` değeridir. İstek Secret Key ile yapılmalıdır.
+
+```php
+use Tahsilat\Exception\ApiErrorException;
+
+try {
+    $cancellation = $tahsilat->subscriptions->cancel($transaction->getSubscriptionId());
+
+    echo $cancellation->subscription_id; // 30655095022664
+    echo $cancellation->status_text;     // "cancelled"
+    echo $cancellation->cancelled_at;    // "2026-11-21T16:32:56+03:00"
+    $cancellation->isCancelled();        // true
+} catch (ApiErrorException $e) {
+    // 422 / 901: abonelik bulunamadı, başka firmaya ait ya da kimlik 14 haneli değil
+    echo $e->getMessage();
+}
+```
+
+- İptal anında geçerlidir ve geri alınamaz; yeni tahsilat yapılmaz, önceki ödemeler iade edilmez.
+- Tekrar çağrılabilir: zaten iptal edilmiş abonelikte hata fırlamaz, `cancelled_at` ilk iptalin tarihidir.
+
 İşlem sonucundaki `customer` bloğu işlemin müşterisini ve müşteriye tanımlı metadata'yı taşır (müşteri yoksa ya da silindiyse `null`):
 
 ```php
